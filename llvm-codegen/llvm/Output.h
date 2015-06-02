@@ -18,6 +18,10 @@ public:
     LValue buildBr(LBasicBlock bb);
     LValue buildRet(LValue ret);
     LValue buildRetVoid(void);
+    LValue buildLoadArgIndex(int index);
+    LValue buildStoreArgIndex(LValue val, int index);
+    LValue buildSelect(LValue condition, LValue taken, LValue notTaken);
+    LValue buildICmp(LIntPredicate cond, LValue left, LValue right);
 
     inline LValue buildCall(LValue function, const LValue* args, unsigned numArgs)
     {

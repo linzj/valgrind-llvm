@@ -116,4 +116,26 @@ void Output::buildPatchCommon(LValue where, const PatchDesc& desc, size_t patchS
     // record the stack map info
     m_state.m_patchMap.insert(std::make_pair(m_stackMapsId++, desc));
 }
+
+LValue Output::buildLoadArgIndex(int index)
+{
+    LValue constIndex[] = { constInt32(0), constInt32(index) };
+    return buildLoad(llvmAPI->BuildInBoundsGEP(m_builder, m_arg, constIndex, 2, ""));
+}
+
+LValue Output::buildStoreArgIndex(LValue val, int index)
+{
+    LValue constIndex[] = { constInt32(0), constInt32(index) };
+    return buildStore(val, llvmAPI->BuildInBoundsGEP(m_builder, m_arg, constIndex, 2, ""));
+}
+
+LValue Output::buildSelect(LValue condition, LValue taken, LValue notTaken)
+{
+    return jit::buildSelect(m_builder, condition, taken, notTaken);
+}
+
+LValue Output::buildICmp(LIntPredicate cond, LValue left, LValue right)
+{
+    return jit::buildICmp(m_builder, cond, left, right);
+}
 }

@@ -25,10 +25,11 @@ static void buildIR(State& state)
     output.buildBr(body);
     output.positionToBBEnd(body);
     LValue one = output.constInt32(1);
-    LValue gep = output.buildStructGEP(arg, 0);
-    LValue loaded = output.buildLoad(gep);
-    LValue add = output.buildAdd(loaded, one);
-    output.buildStore(add, gep);
+    LValue indicator = output.buildLoadArgIndex(2);
+    LValue val = output.buildLoadArgIndex(0);
+    LValue add = output.buildAdd(val, one);
+    LValue result = output.buildSelect(output.buildICmp(LLVMIntNE, indicator, output.constInt32(0)), add, val);
+    output.buildStoreArgIndex(result, 0);
 
     LBasicBlock patch = output.appendBasicBlock("Patch");
     output.buildBr(patch);
