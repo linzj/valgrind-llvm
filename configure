@@ -692,6 +692,7 @@ BUILD_PCLMULQDQ_TESTS_FALSE
 BUILD_PCLMULQDQ_TESTS_TRUE
 BUILD_SSSE3_TESTS_FALSE
 BUILD_SSSE3_TESTS_TRUE
+LLVM_LIBS
 BUILD_SSE3_TESTS_FALSE
 BUILD_SSE3_TESTS_TRUE
 FLAG_NO_BUILD_ID
@@ -9183,6 +9184,16 @@ else
   BUILD_SSE3_TESTS_FALSE=
 fi
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if llvm exists" >&5
+$as_echo_n "checking if llvm exists... " >&6; }
+LLVM_LIBS="`llvm-config --ldflags` `llvm-config --libs`"
+if test "x$LLVM_LIBS" = "x"; then
+	as_fn_error $? "llvm not found" "$LINENO" 5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
 
 
 # Ditto for SSSE3 instructions (note extra S)

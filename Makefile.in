@@ -308,6 +308,7 @@ LDFLAGS = @LDFLAGS@
 LDFLAGS_MPI = @LDFLAGS_MPI@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LLVM_LIBS = @LLVM_LIBS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -570,6 +571,7 @@ EXP_TOOLS = exp-sgcheck \
 SUBDIRS = \
 	include \
 	VEX \
+	llvm-codegen \
 	coregrind \
 	. \
 	$(TOOLS) \

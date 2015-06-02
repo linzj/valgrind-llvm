@@ -2070,6 +2070,14 @@ AC_MSG_RESULT([no])
 AM_CONDITIONAL(BUILD_SSE3_TESTS, test x$ac_have_as_sse3 = xyes)
 
 
+AC_MSG_CHECKING([if llvm exists])
+LLVM_LIBS="`llvm-config --ldflags` `llvm-config --libs`"
+if test "x$LLVM_LIBS" = "x"; then
+	AC_MSG_ERROR([llvm not found])
+fi
+AC_MSG_RESULT([yes])
+AC_SUBST(LLVM_LIBS)
+
 # Ditto for SSSE3 instructions (note extra S)
 # Note, this doesn't generate a C-level symbol.  It generates a
 # automake-level symbol (BUILD_SSSE3_TESTS), used in test Makefile.am's

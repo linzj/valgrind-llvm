@@ -21,6 +21,7 @@ EXP_TOOLS = 	exp-sgcheck \
 SUBDIRS = \
 	include \
 	VEX \
+	llvm-codegen \
 	coregrind \
 	. \
 	$(TOOLS) \

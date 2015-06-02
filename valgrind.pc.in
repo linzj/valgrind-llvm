@@ -6,11 +6,12 @@ arch=@VGCONF_ARCH_PRI@
 os=@VGCONF_OS@
 platform=@VGCONF_ARCH_PRI@-@VGCONF_OS@
 valt_load_address=@VALT_LOAD_ADDRESS_PRI@
+llvm_libs=@LLVM_LIBS@
 
 Name: Valgrind
 Description: A dynamic binary instrumentation framework
 Version: @VERSION@
 Requires:
-Libs: -L${libdir}/valgrind -lcoregrind-@VGCONF_ARCH_PRI@-@VGCONF_OS@ -lvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@ -lgcc
+Libs: -L${libdir}/valgrind -lcoregrind-@VGCONF_ARCH_PRI@-@VGCONF_OS@ -lvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@ -lllvm-codgen-@VGCONF_ARCH_PRI@-@VGCONF_OS@ ${llvm_libs} -lgcc
 Cflags: -I${includedir}
 
