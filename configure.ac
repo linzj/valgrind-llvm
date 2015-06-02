@@ -1018,6 +1018,13 @@ case "${GLIBC_VERSION}" in
 	DEFAULT_SUPP="glibc-2.34567-NPTL-helgrind.supp ${DEFAULT_SUPP}"
 	DEFAULT_SUPP="glibc-2.X-drd.supp ${DEFAULT_SUPP}"
 	;;
+     2.21)
+	AC_MSG_RESULT(2.21 family)
+	AC_DEFINE([GLIBC_2_20], 1, [Define to 1 if you're using glibc 2.20.x])
+	DEFAULT_SUPP="glibc-2.X.supp ${DEFAULT_SUPP}"
+	DEFAULT_SUPP="glibc-2.34567-NPTL-helgrind.supp ${DEFAULT_SUPP}"
+	DEFAULT_SUPP="glibc-2.X-drd.supp ${DEFAULT_SUPP}"
+	;;
      darwin)
 	AC_MSG_RESULT(Darwin)
 	AC_DEFINE([DARWIN_LIBC], 1, [Define to 1 if you're using Darwin])
@@ -2963,6 +2970,7 @@ AM_CONDITIONAL([HAVE_SHARED_POINTER_ANNOTATION],
 # Nb: VEX/Makefile is generated from Makefile.vex.in.
 AC_CONFIG_FILES([
    Makefile 
+   llvm-codegen/Makefile
    VEX/Makefile:Makefile.vex.in
    valgrind.spec
    valgrind.pc

@@ -1,3 +1,4 @@
+include $(top_srcdir)/Makefile.all.am
 #----------------------------------------------------------------------------
 # libllvmcodegen-<platform>.a
 #----------------------------------------------------------------------------
@@ -17,7 +18,10 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
-	llvm/Link.cpp \
+	llvm/Link.cpp
+
+AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@ += \
+	-I$(top_srcdir)/llvm-codegen/llvm
 
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_SOURCES = \
     $(LLVMCODEGEN_SOURCES_COMMON)
@@ -29,3 +33,6 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CFLAGS = \
     $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CCASFLAGS = \
     $(AM_CCASFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS = \
+    $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
+	-std=c++11
