@@ -37,3 +37,20 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CCASFLAGS = \
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS = \
     $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
 	-std=c++11
+
+bin_PROGRAMS = \
+	testIR
+
+testIR_SOURCES = \
+	test/IRContext.cpp \
+	test/main.cpp \
+	test/IRParser.y \
+	test/IRScanner.l
+
+testIR_CPPFLAGS = \
+				 $(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
+				 -I$(top_srcdir)/llvm-codegen/test
+
+testIR_CXXFLAGS = \
+    $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
+	-std=c++11

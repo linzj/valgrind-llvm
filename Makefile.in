@@ -95,7 +95,7 @@ DIST_COMMON = $(top_srcdir)/Makefile.all.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/drd/scripts/download-and-build-splash2.in \
 	$(dist_noinst_SCRIPTS) $(dist_noinst_DATA) \
 	$(pkginclude_HEADERS) AUTHORS COPYING NEWS README compile \
-	config.guess config.sub depcomp install-sh missing
+	config.guess config.sub depcomp install-sh missing ylwrap
 
 # The Android toolchain includes all kinds of stdlib helpers present in
 # bionic which is bad because we are not linking with it and the Android
@@ -306,6 +306,9 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_MPI = @LDFLAGS_MPI@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LLVM_LIBS = @LLVM_LIBS@
@@ -341,6 +344,8 @@ VGCONF_PLATFORM_PRI_CAPS = @VGCONF_PLATFORM_PRI_CAPS@
 VGCONF_PLATFORM_SEC_CAPS = @VGCONF_PLATFORM_SEC_CAPS@
 VGCONF_PLATVARIANT = @VGCONF_PLATVARIANT@
 VG_TMPDIR = @VG_TMPDIR@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
