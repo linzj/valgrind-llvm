@@ -13,5 +13,5 @@ IR_EXIT IR_EXIT
 {IR_EXIT}  return IR_EXIT;
 [\n\r\f]   return NEWLINE;
 <<EOF>>    contextSawEof(yyextra);
-.          contextSawError(yyextra);
+.          contextSawError(yyextra); return ERR;
 %%

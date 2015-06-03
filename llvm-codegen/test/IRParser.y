@@ -21,7 +21,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 #define scanner context->m_scanner
 %}
 
-%token <lex> IR_EXIT NEWLINE
+%token <lex> IR_EXIT NEWLINE ERR
 
 %start input
 %%
@@ -29,6 +29,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 input:
   %empty
 | input line
+| ERR
 ;
 
 line:
