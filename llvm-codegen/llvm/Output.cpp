@@ -80,7 +80,7 @@ LValue Output::buildRetVoid(void)
 
 LValue Output::buildCast(LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy)
 {
-    llvmAPI->BuildCast(m_builder, Op, Val, DestTy, "");
+    return llvmAPI->BuildCast(m_builder, Op, Val, DestTy, "");
 }
 
 void Output::buildGetArg()

@@ -147,7 +147,8 @@ am__objects_1 = llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-InitializeLL
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Compile.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.$(OBJEXT) \
-	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.$(OBJEXT)
+	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.$(OBJEXT) \
+	libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.$(OBJEXT)
 am_libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS =  \
 	$(am__objects_1)
 am__objects_2 =
@@ -520,7 +521,8 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
-	llvm/Link.cpp
+	llvm/Link.cpp \
+	isel_amd64.cpp
 
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_SOURCES = \
     $(LLVMCODEGEN_SOURCES_COMMON)
@@ -647,6 +649,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-CommonValues.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Compile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-CompilerState.Po@am__quote@
@@ -813,6 +816,20 @@ llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.obj: llvm/Link.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='llvm/Link.cpp' object='llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.obj `if test -f 'llvm/Link.cpp'; then $(CYGPATH_W) 'llvm/Link.cpp'; else $(CYGPATH_W) '$(srcdir)/llvm/Link.cpp'; fi`
+
+libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.o: isel_amd64.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -MT libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.o -MD -MP -MF $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Tpo -c -o libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.o `test -f 'isel_amd64.cpp' || echo '$(srcdir)/'`isel_amd64.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Tpo $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='isel_amd64.cpp' object='libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.o `test -f 'isel_amd64.cpp' || echo '$(srcdir)/'`isel_amd64.cpp
+
+libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.obj: isel_amd64.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -MT libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.obj -MD -MP -MF $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Tpo -c -o libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.obj `if test -f 'isel_amd64.cpp'; then $(CYGPATH_W) 'isel_amd64.cpp'; else $(CYGPATH_W) '$(srcdir)/isel_amd64.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Tpo $(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='isel_amd64.cpp' object='libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.obj `if test -f 'isel_amd64.cpp'; then $(CYGPATH_W) 'isel_amd64.cpp'; else $(CYGPATH_W) '$(srcdir)/isel_amd64.cpp'; fi`
 tags TAGS:
 
 ctags CTAGS:
@@ -898,7 +915,7 @@ clean: clean-am
 clean-am: clean-generic clean-pkglibLIBRARIES mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf llvm/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) llvm/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic
 
@@ -943,7 +960,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf llvm/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) llvm/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

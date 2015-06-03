@@ -136,7 +136,7 @@ RegisterSet StackMaps::Record::liveOutsSet() const
 
 static void merge(RegisterSet& dst, const RegisterSet& input)
 {
-    for (int i = 0; i < input.size(); ++i) {
+    for (size_t i = 0; i < input.size(); ++i) {
         dst.set(i, dst.test(i) ^ input.test(i) ^ dst.test(i));
     }
 }
@@ -161,9 +161,9 @@ bool StackMaps::parse(DataView* view)
     context.view->read<uint8_t>(context.offset, true); // Reserved
     context.view->read<uint8_t>(context.offset, true); // Reserved
 
-    uint32_t numFunctions;
-    uint32_t numConstants;
-    uint32_t numRecords;
+    uint32_t numFunctions = 0;
+    uint32_t numConstants = 0;
+    uint32_t numRecords = 0;
 
     numFunctions = context.view->read<uint32_t>(context.offset, true);
     if (context.version >= 1) {

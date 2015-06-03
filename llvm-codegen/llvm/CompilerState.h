@@ -10,6 +10,7 @@
 namespace jit {
 enum class PatchType {
     Direct,
+    DirectSlow,
     Indirect,
     Assist,
 };

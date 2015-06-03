@@ -287,9 +287,5 @@ static inline void verifyModule(LModule module)
     llvmAPI->VerifyModule(module, LLVMAbortProcessAction, &error);
     llvmAPI->DisposeMessage(error);
 }
-static inline LValue constInlineAsm(LType Ty, const char* AsmString, const char* Constraints, bool HasSideEffects, bool IsAlignStack)
-{
-    llvmAPI->ConstInlineAsm(Ty, AsmString, Constraints, HasSideEffects, IsAlignStack);
-}
 }
 #endif /* ABBREVIATIONS_H */

@@ -18,7 +18,8 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
-	llvm/Link.cpp
+	llvm/Link.cpp \
+	isel_amd64.cpp
 
 AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@ += \
 	-I$(top_srcdir)/llvm-codegen/llvm

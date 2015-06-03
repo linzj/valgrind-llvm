@@ -25,12 +25,12 @@ public:
         : m_val(invalid())
     {
     }
-    Reg(int val)
-        : m_val(val)
+    Reg(int val_)
+        : m_val(val_)
     {
     }
-    Reg(AMD64 val)
-        : m_val(val)
+    Reg(AMD64 val_)
+        : m_val(val_)
     {
     }
     int val() const { return m_val; }
@@ -46,8 +46,8 @@ protected:
 
 class FPRReg : public Reg {
 public:
-    FPRReg(int val)
-        : Reg(val)
+    FPRReg(int val_)
+        : Reg(val_)
     {
         m_isFloat = true;
     }
@@ -60,8 +60,8 @@ public:
     {
     }
 
-    explicit DWARFRegister(int16_t dwarfRegNum)
-        : m_dwarfRegNum(dwarfRegNum)
+    explicit DWARFRegister(int16_t dwarfRegNum_)
+        : m_dwarfRegNum(dwarfRegNum_)
     {
     }
 
