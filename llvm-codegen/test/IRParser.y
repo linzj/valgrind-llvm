@@ -8,8 +8,7 @@
 %defines
 
 %union {
-    struct {
-    } lex;
+    unsigned long long num;
 }
 
 %{
@@ -21,7 +20,8 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 #define scanner context->m_scanner
 %}
 
-%token <lex> IR_EXIT NEWLINE ERR
+%token IR_EXIT NEWLINE ERR SPACE
+%token <num> ADDR
 
 %start input
 %%
@@ -37,8 +37,8 @@ line:
 ;
 
 statement
-    : IR_EXIT {
-        contextSawIRExit(context);
+    : IR_EXIT SPACE ADDR {
+        contextSawIRExit(context, $3);
     }
     ;
 %%

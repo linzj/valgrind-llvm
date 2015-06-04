@@ -7,7 +7,7 @@ struct IRContext {
     void* m_scanner;
 };
 
-void contextSawIRExit(struct IRContext* context);
+void contextSawIRExit(struct IRContext* context, unsigned long long);
 void contextSawEof(struct IRContext* context);
 void contextSawError(struct IRContext* context);
 void contextYYError(int line, int column, struct IRContext* context, const char* reason);

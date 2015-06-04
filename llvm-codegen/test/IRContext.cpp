@@ -10,9 +10,9 @@ extern "C" {
 #define PUSH_BACK(stmt) \
     CONTEXT()->m_statments.push_back(stmt)
 
-void contextSawIRExit(struct IRContext* context)
+void contextSawIRExit(struct IRContext* context, unsigned long long addr)
 {
-    IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U1(1)), Ijk_Boring, IRConst_U64(reinterpret_cast<uint64_t>(helperIRExit)), offsetof(VexGuestAMD64State, guest_RIP));
+    IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U1(1)), Ijk_Boring, IRConst_U64(static_cast<uint64_t>(addr)), offsetof(VexGuestAMD64State, guest_RIP));
     PUSH_BACK(stmt);
     LOGE("saw ir exit\n");
 }
