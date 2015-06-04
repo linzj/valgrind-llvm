@@ -50,7 +50,8 @@ testIR_SOURCES = \
 	test/main.cpp \
 	test/Helpers.cpp \
 	test/IRParser.y \
-	test/IRScanner.l
+	test/IRScanner.l \
+	test/dispatch_vex.S
 
 testIR_CPPFLAGS = \
 				 $(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \

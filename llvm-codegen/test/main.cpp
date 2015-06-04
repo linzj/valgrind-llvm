@@ -8,6 +8,8 @@ extern "C" {
 #include <libvex_ir.h>
 #include <VEX/priv/main_util.h>
 #include <VEX/priv/host_generic_regs.h>
+#include <VEX/priv/host_amd64_defs.h>
+#include <VEX/priv/guest_amd64_defs.h>
 #include <libvex_trc_values.h>
 #include <libvex_guest_amd64.h>
 }
@@ -23,6 +25,73 @@ int yylex_init_extra(struct IRContext* user_defined, yyscan_t* scanner);
 
 int yylex_destroy(yyscan_t yyscanner);
 void vexSetAllocModeTEMP_and_clear(void);
+extern AMD64Instr* AMD64Instr_EvCheck(AMD64AMode* amCounter,
+    AMD64AMode* amFailAddr);
+extern AMD64Instr* AMD64Instr_ProfInc(void);
+
+extern void ppAMD64Instr(AMD64Instr*, Bool);
+
+/* Some functions that insulate the register allocator from details
+   of the underlying instruction set. */
+extern void getRegUsage_AMD64Instr(HRegUsage*, AMD64Instr*, Bool);
+extern void mapRegs_AMD64Instr(HRegRemap*, AMD64Instr*, Bool);
+extern Bool isMove_AMD64Instr(AMD64Instr*, HReg*, HReg*);
+extern Int emit_AMD64Instr(/*MB_MOD*/ Bool* is_profInc,
+    UChar* buf, Int nbuf,
+    AMD64Instr* i,
+    Bool mode64,
+    VexEndness endness_host,
+    void* disp_cp_chain_me_to_slowEP,
+    void* disp_cp_chain_me_to_fastEP,
+    void* disp_cp_xindir,
+    void* disp_cp_xassisted);
+
+extern void genSpill_AMD64(/*OUT*/ HInstr** i1, /*OUT*/ HInstr** i2,
+    HReg rreg, Int offset, Bool);
+extern void genReload_AMD64(/*OUT*/ HInstr** i1, /*OUT*/ HInstr** i2,
+    HReg rreg, Int offset, Bool);
+
+extern void getAllocableRegs_AMD64(Int*, HReg**);
+extern HInstrArray* iselSB_AMD64(IRSB*,
+    VexArch,
+    VexArchInfo*,
+    VexAbiInfo*,
+    Int offs_Host_EvC_Counter,
+    Int offs_Host_EvC_FailAddr,
+    Bool chainingAllowed,
+    Bool addProfInc,
+    Addr64 max_ga);
+
+/* How big is an event check?  This is kind of a kludge because it
+   depends on the offsets of host_EvC_FAILADDR and host_EvC_COUNTER,
+   and so assumes that they are both <= 128, and so can use the short
+   offset encoding.  This is all checked with assertions, so in the
+   worst case we will merely assert at startup. */
+extern Int evCheckSzB_AMD64(VexEndness endness_host);
+
+/* Perform a chaining and unchaining of an XDirect jump. */
+extern VexInvalRange chainXDirect_AMD64(VexEndness endness_host,
+    void* place_to_chain,
+    void* disp_cp_chain_me_EXPECTED,
+    void* place_to_jump_to);
+
+extern VexInvalRange unchainXDirect_AMD64(VexEndness endness_host,
+    void* place_to_unchain,
+    void* place_to_jump_to_EXPECTED,
+    void* disp_cp_chain_me);
+
+/* Patch the counter location into an existing ProfInc point. */
+extern VexInvalRange patchProfInc_AMD64(VexEndness endness_host,
+    void* place_to_patch,
+    ULong* location_of_counter);
+void vex_disp_run_translations(uintptr_t* two_words,
+    void* guest_state,
+    Addr64 host_addr);
+void vex_disp_cp_chain_me_to_slowEP(void);
+void vex_disp_cp_chain_me_to_fastEP(void);
+void vex_disp_cp_xindir(void);
+void vex_disp_cp_xassisted(void);
+void vex_disp_cp_evcheck_fail(void);
 }
 static void failure_exit(void) __attribute__((noreturn));
 
@@ -45,6 +114,107 @@ void log_bytes(HChar* bytes, Int nbytes)
     }
 }
 
+static size_t genVex(IRSB* irsb, HChar* buffer, size_t len)
+{
+    VexArchInfo archinfo = { 0, VexEndnessLE };
+    VexAbiInfo abiinfo = { 0 };
+    Bool (*isMove)(HInstr*, HReg*, HReg*);
+    void (*getRegUsage)(HRegUsage*, HInstr*, Bool);
+    void (*mapRegs)(HRegRemap*, HInstr*, Bool);
+    void (*genSpill)(HInstr**, HInstr**, HReg, Int, Bool);
+    void (*genReload)(HInstr**, HInstr**, HReg, Int, Bool);
+    HInstr* (*directReload)(HInstr*, HReg, Short);
+    void (*ppInstr)(HInstr*, Bool);
+    void (*ppReg)(HReg);
+    HInstrArray* (*iselSB)(IRSB*, VexArch, VexArchInfo*, VexAbiInfo*,
+        Int, Int, Bool, Bool, Addr64);
+    Int (*emit)(/*MB_MOD*/ Bool*,
+        UChar*, Int, HInstr*, Bool, VexEndness,
+        void*, void*, void*, void*);
+    IRExpr* (*specHelper)(const HChar*, IRExpr**, IRStmt**, Int);
+    Bool (*preciseMemExnsFn)(Int, Int);
+    Bool mode64 = True;
+    HReg* available_real_regs;
+    Int n_available_real_regs;
+    IRType host_word_type, guest_word_type;
+    Int guest_sizeB;
+    VexGuestLayout* guest_layout;
+    Int offB_CMSTART, offB_CMLEN, offB_GUEST_IP, szB_GUEST_IP;
+    Int offB_HOST_EvC_COUNTER, offB_HOST_EvC_FAILADDR;
+    HInstrArray* vcode;
+    HInstrArray* rcode;
+
+    // host amd64
+    getAllocableRegs_AMD64(&n_available_real_regs,
+        &available_real_regs);
+    isMove = (Bool (*)(HInstr*, HReg*, HReg*))isMove_AMD64Instr;
+    getRegUsage = (void (*)(HRegUsage*, HInstr*, Bool))
+        getRegUsage_AMD64Instr;
+    mapRegs = (void (*)(HRegRemap*, HInstr*, Bool))mapRegs_AMD64Instr;
+    genSpill = (void (*)(HInstr**, HInstr**, HReg, Int, Bool))
+        genSpill_AMD64;
+    genReload = (void (*)(HInstr**, HInstr**, HReg, Int, Bool))
+        genReload_AMD64;
+    ppInstr = (void (*)(HInstr*, Bool))ppAMD64Instr;
+    ppReg = (void (*)(HReg))ppHRegAMD64;
+    iselSB = iselSB_AMD64;
+    emit = (Int (*)(Bool*, UChar*, Int, HInstr*, Bool, VexEndness,
+        void*, void*, void*, void*))
+        emit_AMD64Instr;
+    host_word_type = Ity_I64;
+    // guest amd64
+    preciseMemExnsFn = guest_amd64_state_requires_precise_mem_exns;
+    specHelper = guest_amd64_spechelper;
+    guest_sizeB = sizeof(VexGuestAMD64State);
+    guest_word_type = Ity_I64;
+    guest_layout = &amd64guest_layout;
+    offB_CMSTART = offsetof(VexGuestAMD64State, guest_CMSTART);
+    offB_CMLEN = offsetof(VexGuestAMD64State, guest_CMLEN);
+    offB_GUEST_IP = offsetof(VexGuestAMD64State, guest_RIP);
+    szB_GUEST_IP = sizeof(((VexGuestAMD64State*)0)->guest_RIP);
+    offB_HOST_EvC_COUNTER = offsetof(VexGuestAMD64State, host_EvC_COUNTER);
+    offB_HOST_EvC_FAILADDR = offsetof(VexGuestAMD64State, host_EvC_FAILADDR);
+
+    vcode = iselSB(irsb, VexArchAMD64,
+        &archinfo,
+        &abiinfo,
+        offB_HOST_EvC_COUNTER,
+        offB_HOST_EvC_FAILADDR,
+        True,
+        False,
+        0);
+    rcode = doRegisterAllocation(vcode, available_real_regs,
+        n_available_real_regs,
+        isMove, getRegUsage, mapRegs,
+        genSpill, genReload, directReload,
+        guest_sizeB,
+        ppInstr, ppReg, mode64);
+    size_t out_used = 0; /* tracks along the host_bytes array */
+    for (int i = 0; i < rcode->arr_used; i++) {
+        HInstr* hi = rcode->arr[i];
+        Bool hi_isProfInc = False;
+        UChar insn_bytes[128];
+
+        int j = emit(&hi_isProfInc,
+            insn_bytes, sizeof insn_bytes, hi,
+            mode64, VexEndnessLE,
+            reinterpret_cast<void*>(vex_disp_cp_chain_me_to_slowEP),
+            reinterpret_cast<void*>(vex_disp_cp_chain_me_to_fastEP),
+            reinterpret_cast<void*>(vex_disp_cp_xindir),
+            reinterpret_cast<void*>(vex_disp_cp_xassisted));
+        EMASSERT(out_used + j <= len);
+        EMASSERT(!hi_isProfInc);
+        {
+            HChar* dst = &buffer[out_used];
+            for (int k = 0; k < j; k++) {
+                dst[k] = insn_bytes[k];
+            }
+            out_used += j;
+        }
+    }
+    return out_used;
+}
+
 int main()
 {
     VexControl clo_vex_control;
@@ -64,20 +234,11 @@ int main()
     yylex_init_extra(&context, &context.m_scanner);
     yyparse(&context);
     yylex_destroy(context.m_scanner);
-    Bool (*isMove)(HInstr*, HReg*, HReg*);
-    void (*getRegUsage)(HRegUsage*, HInstr*, Bool);
-    void (*mapRegs)(HRegRemap*, HInstr*, Bool);
-    void (*genSpill)(HInstr**, HInstr**, HReg, Int, Bool);
-    void (*genReload)(HInstr**, HInstr**, HReg, Int, Bool);
-    HInstr* (*directReload)(HInstr*, HReg, Short);
-    void (*ppInstr)(HInstr*, Bool);
-    void (*ppReg)(HReg);
-    HInstrArray* (*iselSB)(IRSB*, VexArch, VexArchInfo*, VexAbiInfo*,
-        Int, Int, Bool, Bool, Addr64);
-    Int (*emit)(/*MB_MOD*/ Bool*,
-        UChar*, Int, HInstr*, Bool, VexEndness,
-        void*, void*, void*, void*);
-    IRExpr* (*specHelper)(const HChar*, IRExpr**, IRStmt**, Int);
-    Bool (*preciseMemExnsFn)(Int, Int);
+
+    IRSB* irsb;
+    irsb = emptyIRSB();
+    std::vector<HChar> buffer;
+    buffer.resize(4096);
+    size_t generatedBytes = genVex(irsb, const_cast<HChar*>(buffer.data()), buffer.size());
     return 0;
 }

@@ -164,7 +164,8 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS =  \
 PROGRAMS = $(bin_PROGRAMS)
 am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
 	test/testIR-main.$(OBJEXT) test/testIR-Helpers.$(OBJEXT) \
-	test/testIR-IRParser.$(OBJEXT) test/testIR-IRScanner.$(OBJEXT)
+	test/testIR-IRParser.$(OBJEXT) test/testIR-IRScanner.$(OBJEXT) \
+	test/testIR-dispatch_vex.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
 testIR_DEPENDENCIES =  \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
@@ -191,6 +192,12 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+CPPASCOMPILE = $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS)
+AM_V_CPPAS = $(am__v_CPPAS_@AM_V@)
+am__v_CPPAS_ = $(am__v_CPPAS_@AM_DEFAULT_V@)
+am__v_CPPAS_0 = @echo "  CPPAS   " $@;
+am__v_CPPAS_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_@AM_V@)
@@ -618,7 +625,8 @@ testIR_SOURCES = \
 	test/main.cpp \
 	test/Helpers.cpp \
 	test/IRParser.y \
-	test/IRScanner.l
+	test/IRScanner.l \
+	test/dispatch_vex.S
 
 testIR_CPPFLAGS = \
 				 $(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
@@ -636,7 +644,7 @@ all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cpp .l .o .obj .y
+.SUFFIXES: .S .c .cpp .l .o .obj .y
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/Makefile.all.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -788,6 +796,8 @@ test/testIR-IRParser.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRScanner.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-dispatch_vex.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 
 testIR$(EXEEXT): $(testIR_OBJECTS) $(testIR_DEPENDENCIES) $(EXTRA_testIR_DEPENDENCIES) 
 	@rm -f testIR$(EXEEXT)
@@ -816,7 +826,38 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRContext.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRScanner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-dispatch_vex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-main.Po@am__quote@
+
+.S.o:
+@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCCAS_TRUE@	$(CPPASCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCCAS_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CPPASCOMPILE) -c -o $@ $<
+
+.S.obj:
+@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCCAS_TRUE@	$(CPPASCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCCAS_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CPPASCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+test/testIR-dispatch_vex.o: test/dispatch_vex.S
+@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS) -MT test/testIR-dispatch_vex.o -MD -MP -MF test/$(DEPDIR)/testIR-dispatch_vex.Tpo -c -o test/testIR-dispatch_vex.o `test -f 'test/dispatch_vex.S' || echo '$(srcdir)/'`test/dispatch_vex.S
+@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-dispatch_vex.Tpo test/$(DEPDIR)/testIR-dispatch_vex.Po
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='test/dispatch_vex.S' object='test/testIR-dispatch_vex.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS) -c -o test/testIR-dispatch_vex.o `test -f 'test/dispatch_vex.S' || echo '$(srcdir)/'`test/dispatch_vex.S
+
+test/testIR-dispatch_vex.obj: test/dispatch_vex.S
+@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS) -MT test/testIR-dispatch_vex.obj -MD -MP -MF test/$(DEPDIR)/testIR-dispatch_vex.Tpo -c -o test/testIR-dispatch_vex.obj `if test -f 'test/dispatch_vex.S'; then $(CYGPATH_W) 'test/dispatch_vex.S'; else $(CYGPATH_W) '$(srcdir)/test/dispatch_vex.S'; fi`
+@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-dispatch_vex.Tpo test/$(DEPDIR)/testIR-dispatch_vex.Po
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='test/dispatch_vex.S' object='test/testIR-dispatch_vex.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS) -c -o test/testIR-dispatch_vex.obj `if test -f 'test/dispatch_vex.S'; then $(CYGPATH_W) 'test/dispatch_vex.S'; else $(CYGPATH_W) '$(srcdir)/test/dispatch_vex.S'; fi`
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
