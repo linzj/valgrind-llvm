@@ -17,14 +17,24 @@ void contextSawIRExit(struct IRContext* context, unsigned long long addr)
     LOGE("saw ir exit\n");
 }
 
-void contextSawEof(struct IRContext*)
+void contextSawRegisterInit(struct IRContext* context, const char* registerName, unsigned long long val)
 {
-    printf("saw eof.\n");
+    LOGE("%s: val = %llx.\n", __FUNCTION__, val);
 }
 
-void contextSawError(struct IRContext*)
+void contextSawCheckRegisterConst(struct IRContext* context, const char* registerName, unsigned long long val)
 {
-    printf("saw error.\n");
+    LOGE("%s: registerName = %s, val = %llx.\n", __FUNCTION__, registerName, val);
+}
+
+void contextSawCheckRegister(struct IRContext* context, const char* registerName1, const char* registerName2)
+{
+    LOGE("%s: registerName1 = %s, registerName2 = %s.\n", __FUNCTION__, registerName1, registerName2);
+}
+
+void contextSawChecktState(struct IRContext* context, unsigned long long val)
+{
+    LOGE("%s: val = %llx.\n", val);
 }
 
 void contextYYError(int line, int column, struct IRContext* context, const char* reason)
