@@ -44,6 +44,7 @@ bin_PROGRAMS = \
 testIR_SOURCES = \
 	test/IRContext.cpp \
 	test/main.cpp \
+	test/Helpers.cpp \
 	test/IRParser.y \
 	test/IRScanner.l
 
@@ -54,3 +55,6 @@ testIR_CPPFLAGS = \
 testIR_CXXFLAGS = \
     $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
 	-std=c++11
+
+testIR_LDADD = \
+	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a

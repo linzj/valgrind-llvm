@@ -1,9 +1,18 @@
-#include "IRContext.h"
+#include "IRContextInternal.h"
+#include "Helpers.h"
+extern "C" {
+#include <libvex_guest_amd64.h>
+}
 #include <stdio.h>
+#define CONTEXT() \
+    static_cast<struct IRContextInternal*>(context)
+#define PUSH_BACK(stmt) \
+    CONTEXT()->m_statments.push_back(stmt)
 
-void contextSawIRExit(struct IRContext*)
+void contextSawIRExit(struct IRContext* context)
 {
-    printf("saw ir exit.\n");
+    IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U64(1)), Ijk_Boring, IRConst_U64(reinterpret_cast<uint64_t>(helperIRExit)), offsetof(VexGuestAMD64State, guest_RIP));
+    PUSH_BACK(stmt);
 }
 
 void contextSawEof(struct IRContext*)
