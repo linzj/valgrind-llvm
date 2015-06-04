@@ -8,6 +8,7 @@
 #include "IRContextInternal.h"
 #include "RegisterInit.h"
 #include "RegisterAssign.h"
+#include "Check.h"
 #include "log.h"
 
 extern "C" {
@@ -159,15 +160,15 @@ static size_t genVex(IRSB* irsb, HChar* buffer, size_t len)
     // guest amd64
     preciseMemExnsFn = guest_amd64_state_requires_precise_mem_exns;
     specHelper = guest_amd64_spechelper;
-    guest_sizeB = sizeof(VexGuestAMD64State);
+    guest_sizeB = sizeof(VexGuestState);
     guest_word_type = Ity_I64;
     guest_layout = &amd64guest_layout;
-    offB_CMSTART = offsetof(VexGuestAMD64State, guest_CMSTART);
-    offB_CMLEN = offsetof(VexGuestAMD64State, guest_CMLEN);
-    offB_GUEST_IP = offsetof(VexGuestAMD64State, guest_RIP);
-    szB_GUEST_IP = sizeof(((VexGuestAMD64State*)0)->guest_RIP);
-    offB_HOST_EvC_COUNTER = offsetof(VexGuestAMD64State, host_EvC_COUNTER);
-    offB_HOST_EvC_FAILADDR = offsetof(VexGuestAMD64State, host_EvC_FAILADDR);
+    offB_CMSTART = offsetof(VexGuestState, guest_CMSTART);
+    offB_CMLEN = offsetof(VexGuestState, guest_CMLEN);
+    offB_GUEST_IP = offsetof(VexGuestState, guest_RIP);
+    szB_GUEST_IP = sizeof(((VexGuestState*)0)->guest_RIP);
+    offB_HOST_EvC_COUNTER = offsetof(VexGuestState, host_EvC_COUNTER);
+    offB_HOST_EvC_FAILADDR = offsetof(VexGuestState, host_EvC_FAILADDR);
 
     vcode = iselSB(irsb, VexArchAMD64,
         &archinfo,
@@ -209,26 +210,38 @@ static size_t genVex(IRSB* irsb, HChar* buffer, size_t len)
     return out_used;
 }
 
-static void initGuestState(VexGuestAMD64State& state, const IRContextInternal& context)
+static void initGuestState(VexGuestState& state, const IRContextInternal& context)
 {
     memset(&state, 0, sizeof(state));
     state.host_EvC_COUNTER = 0xffff;
     RegisterAssign assign;
     for (auto ri : context.m_registerInit) {
-        assign.assign(&state, ri.m_name.c_str(), ri.m_val);
+        assign.assign(&state, ri.m_name, ri.m_val);
     }
 }
 
-static void checkRun(const char* who, const uintptr_t* twoWords, const VexGuestAMD64State& guestState)
+static void checkRun(const char* who, const IRContextInternal& context, const uintptr_t* twoWords, const VexGuestState& guestState)
 {
-    LOGE("check %s okay.\n", who);
+    unsigned checkPassed = 0, checkFailed = 0, count = 0;
+    LOGE("checking %s...\n", who);
+    for (auto& c : context.m_checks) {
+        std::string info;
+        if (c->check(&guestState, twoWords, info)) {
+            checkPassed++;
+        }
+        else {
+            checkFailed++;
+        }
+        LOGE("[%u]:%s.\n", ++count, info.c_str());
+    }
+    LOGE("passed %u, failed %u.\n", checkPassed, checkFailed);
 }
 
 static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
 {
     for (auto stmt : context.m_statments)
         addStmtToIRSB(irsb, stmt);
-    irsb->next = IRExpr_Get(offsetof(VexGuestAMD64State, guest_RIP), Ity_I64);
+    irsb->next = IRExpr_Get(offsetof(VexGuestState, guest_RIP), Ity_I64);
 }
 
 int main()
@@ -247,7 +260,7 @@ int main()
     IRSB* irsb;
     irsb = emptyIRSB();
     fillIRSB(irsb, context);
-    VexGuestAMD64State guestState;
+    VexGuestState guestState;
 
     VexControl clo_vex_control;
     LibVEX_default_VexControl(&clo_vex_control);
@@ -265,6 +278,6 @@ int main()
     uintptr_t twoWords[2];
     initGuestState(guestState, context);
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
-    checkRun("vex", twoWords, guestState);
+    checkRun("vex", context, twoWords, guestState);
     return 0;
 }

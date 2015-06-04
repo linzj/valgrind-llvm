@@ -10,6 +10,7 @@
     macro("rbp", offsetof(VexGuestAMD64State, guest_RBP))           \
     macro("rsi", offsetof(VexGuestAMD64State, guest_RSI))           \
     macro("rdi", offsetof(VexGuestAMD64State, guest_RDI))           \
+    macro("rip", offsetof(VexGuestAMD64State, guest_RIP))           \
     macro("r8", offsetof(VexGuestAMD64State, guest_R8))             \
     macro("r9", offsetof(VexGuestAMD64State, guest_R9))             \
     macro("r10", offsetof(VexGuestAMD64State, guest_R10))           \
@@ -30,11 +31,17 @@ RegisterOperation::RegisterOperation()
 {
 }
 
-uintptr_t* RegisterOperation::getRegisterPointer(VexGuestAMD64State* state, const char* registerName)
+uintptr_t* RegisterOperation::getRegisterPointer(VexGuestState* state, const std::string& registerName)
+{
+    const uintptr_t* ret = getRegisterPointer(static_cast<const VexGuestState*>(state), registerName);
+    return const_cast<uintptr_t*>(ret);
+}
+
+const uintptr_t* RegisterOperation::getRegisterPointer(const VexGuestState* state, const std::string& registerName)
 {
     auto found = m_map.find(registerName);
     if (found == m_map.end()) {
         return nullptr;
     }
-    return reinterpret_cast<uintptr_t*>(reinterpret_cast<char*>(state) + found->second);
+    return reinterpret_cast<const uintptr_t*>(reinterpret_cast<const char*>(state) + found->second);
 }

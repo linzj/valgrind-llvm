@@ -7,7 +7,8 @@
 class RegisterOperation {
 public:
     RegisterOperation();
-    uintptr_t* getRegisterPointer(VexGuestAMD64State* state, const char* registerName);
+    uintptr_t* getRegisterPointer(VexGuestState* state, const std::string& registerName);
+    const uintptr_t* getRegisterPointer(const VexGuestState* state, const std::string& registerName);
 
 private:
     std::unordered_map<std::string, size_t> m_map;

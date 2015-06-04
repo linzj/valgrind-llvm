@@ -9,5 +9,6 @@ extern "C" {
 #include <VEX/priv/guest_amd64_defs.h>
 #include <libvex_trc_values.h>
 #include <libvex_guest_amd64.h>
+typedef VexGuestAMD64State VexGuestState;
 }
 #endif /* VEXHEADERS_H */

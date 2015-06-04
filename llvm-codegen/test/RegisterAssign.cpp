@@ -7,7 +7,7 @@ RegisterAssign::RegisterAssign()
 {
 }
 RegisterAssign::~RegisterAssign() {}
-void RegisterAssign::assign(VexGuestAMD64State* state, const char* registerName, unsigned long long val)
+void RegisterAssign::assign(VexGuestState* state, const std::string& registerName, unsigned long long val)
 {
     uintptr_t* p = m_op->getRegisterPointer(state, registerName);
     EMASSERT(p != nullptr);

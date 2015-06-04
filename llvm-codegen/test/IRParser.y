@@ -83,12 +83,15 @@ check_statment NEWLINE
 check_statment:
     CHECKEQ SPACE REGISTER_NAME SPACE ADDR {
         contextSawCheckRegisterConst(context, $3, $5);
+        free($3);
     }
 |   CHECKEQ SPACE REGISTER_NAME SPACE REGISTER_NAME {
         contextSawCheckRegister(context, $3, $5);
+        free($3);
+        free($5);
     }
-| CHECKSTATE SPACE ADDR {
-        contextSawChecktState(context, $3);
+| CHECKSTATE SPACE ADDR SPACE ADDR {
+        contextSawChecktState(context, $3, $5);
     }
 ;
 %%

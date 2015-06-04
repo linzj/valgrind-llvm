@@ -15,7 +15,7 @@ IR_EXIT IR_EXIT
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
-ADDR 0x[[:xdigit:]]{0,16}
+ADDR 0x[[:xdigit:]]{1,16}
 EQUAL =
 NEWLINE [\n\r\f]
 SPACE [[:space:]]+
