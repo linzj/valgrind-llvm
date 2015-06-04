@@ -1,5 +1,6 @@
 %{
 #include <stdlib.h>
+#include <string.h>
 #include "log.h"
 #include "IRContext.h"
 #include "IRParser.h"
@@ -24,7 +25,7 @@ SEPARATOR \%\%
 {CHECKEQ}           return CHECKEQ;
 {CHECKSTATE}        return CHECKSTATE;
 {REGISTER_NAME}     %{
-                        yylval->text = yytext;
+                        yylval->text = strdup(yytext);
                         return REGISTER_NAME;
                     %}
 {EQUAL}             return EQUAL;

@@ -4,17 +4,10 @@
 #include <string.h>
 #include <string>
 #include <sys/mman.h>
-extern "C" {
-#include <libvex.h>
-#include <libvex_ir.h>
-#include <VEX/priv/main_util.h>
-#include <VEX/priv/host_generic_regs.h>
-#include <VEX/priv/host_amd64_defs.h>
-#include <VEX/priv/guest_amd64_defs.h>
-#include <libvex_trc_values.h>
-#include <libvex_guest_amd64.h>
-}
+#include "VexHeaders.h"
 #include "IRContextInternal.h"
+#include "RegisterInit.h"
+#include "RegisterAssign.h"
 #include "log.h"
 
 extern "C" {
@@ -216,10 +209,14 @@ static size_t genVex(IRSB* irsb, HChar* buffer, size_t len)
     return out_used;
 }
 
-static void initGuestState(VexGuestAMD64State& state)
+static void initGuestState(VexGuestAMD64State& state, const IRContextInternal& context)
 {
     memset(&state, 0, sizeof(state));
     state.host_EvC_COUNTER = 0xffff;
+    RegisterAssign assign;
+    for (auto ri : context.m_registerInit) {
+        assign.assign(&state, ri.m_name.c_str(), ri.m_val);
+    }
 }
 
 static void checkRun(const char* who, const uintptr_t* twoWords, const VexGuestAMD64State& guestState)
@@ -266,7 +263,7 @@ int main()
         &clo_vex_control);
     size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
     uintptr_t twoWords[2];
-    initGuestState(guestState);
+    initGuestState(guestState, context);
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
     checkRun("vex", twoWords, guestState);
     return 0;

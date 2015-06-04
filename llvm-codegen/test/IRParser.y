@@ -1,4 +1,5 @@
 %{
+#include <stdlib.h>
 #include "IRContext.h"
 %}
 %pure-parser
@@ -9,7 +10,7 @@
 
 %union {
     unsigned long long num;
-    const char* text;
+    char* text;
 }
 
 %{
@@ -48,6 +49,7 @@ register_init_statment NEWLINE
 register_init_statment:
     REGISTER_NAME SPACE EQUAL SPACE ADDR {
         contextSawRegisterInit(context, $1, $5);
+        free($1);
     }
 ;
 

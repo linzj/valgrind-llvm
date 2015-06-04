@@ -50,6 +50,8 @@ testIR_SOURCES = \
 	test/IRContext.cpp \
 	test/main.cpp \
 	test/Helpers.cpp \
+	test/RegisterAssign.cpp \
+	test/RegisterOperation.cpp \
 	test/IRParser.y \
 	test/IRScanner.l \
 	test/dispatch_vex.S

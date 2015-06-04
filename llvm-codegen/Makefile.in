@@ -164,6 +164,8 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS =  \
 PROGRAMS = $(bin_PROGRAMS)
 am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
 	test/testIR-main.$(OBJEXT) test/testIR-Helpers.$(OBJEXT) \
+	test/testIR-RegisterAssign.$(OBJEXT) \
+	test/testIR-RegisterOperation.$(OBJEXT) \
 	test/testIR-IRParser.$(OBJEXT) test/testIR-IRScanner.$(OBJEXT) \
 	test/testIR-dispatch_vex.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
@@ -625,6 +627,8 @@ testIR_SOURCES = \
 	test/IRContext.cpp \
 	test/main.cpp \
 	test/Helpers.cpp \
+	test/RegisterAssign.cpp \
+	test/RegisterOperation.cpp \
 	test/IRParser.y \
 	test/IRScanner.l \
 	test/dispatch_vex.S
@@ -793,6 +797,10 @@ test/testIR-main.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-Helpers.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-RegisterAssign.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-RegisterOperation.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRParser.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRScanner.$(OBJEXT): test/$(am__dirstamp) \
@@ -827,6 +835,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRContext.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRScanner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-RegisterAssign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-RegisterOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-dispatch_vex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-main.Po@am__quote@
 
@@ -1115,6 +1125,34 @@ test/testIR-Helpers.obj: test/Helpers.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/Helpers.cpp' object='test/testIR-Helpers.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-Helpers.obj `if test -f 'test/Helpers.cpp'; then $(CYGPATH_W) 'test/Helpers.cpp'; else $(CYGPATH_W) '$(srcdir)/test/Helpers.cpp'; fi`
+
+test/testIR-RegisterAssign.o: test/RegisterAssign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-RegisterAssign.o -MD -MP -MF test/$(DEPDIR)/testIR-RegisterAssign.Tpo -c -o test/testIR-RegisterAssign.o `test -f 'test/RegisterAssign.cpp' || echo '$(srcdir)/'`test/RegisterAssign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-RegisterAssign.Tpo test/$(DEPDIR)/testIR-RegisterAssign.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/RegisterAssign.cpp' object='test/testIR-RegisterAssign.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-RegisterAssign.o `test -f 'test/RegisterAssign.cpp' || echo '$(srcdir)/'`test/RegisterAssign.cpp
+
+test/testIR-RegisterAssign.obj: test/RegisterAssign.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-RegisterAssign.obj -MD -MP -MF test/$(DEPDIR)/testIR-RegisterAssign.Tpo -c -o test/testIR-RegisterAssign.obj `if test -f 'test/RegisterAssign.cpp'; then $(CYGPATH_W) 'test/RegisterAssign.cpp'; else $(CYGPATH_W) '$(srcdir)/test/RegisterAssign.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-RegisterAssign.Tpo test/$(DEPDIR)/testIR-RegisterAssign.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/RegisterAssign.cpp' object='test/testIR-RegisterAssign.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-RegisterAssign.obj `if test -f 'test/RegisterAssign.cpp'; then $(CYGPATH_W) 'test/RegisterAssign.cpp'; else $(CYGPATH_W) '$(srcdir)/test/RegisterAssign.cpp'; fi`
+
+test/testIR-RegisterOperation.o: test/RegisterOperation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-RegisterOperation.o -MD -MP -MF test/$(DEPDIR)/testIR-RegisterOperation.Tpo -c -o test/testIR-RegisterOperation.o `test -f 'test/RegisterOperation.cpp' || echo '$(srcdir)/'`test/RegisterOperation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-RegisterOperation.Tpo test/$(DEPDIR)/testIR-RegisterOperation.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/RegisterOperation.cpp' object='test/testIR-RegisterOperation.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-RegisterOperation.o `test -f 'test/RegisterOperation.cpp' || echo '$(srcdir)/'`test/RegisterOperation.cpp
+
+test/testIR-RegisterOperation.obj: test/RegisterOperation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-RegisterOperation.obj -MD -MP -MF test/$(DEPDIR)/testIR-RegisterOperation.Tpo -c -o test/testIR-RegisterOperation.obj `if test -f 'test/RegisterOperation.cpp'; then $(CYGPATH_W) 'test/RegisterOperation.cpp'; else $(CYGPATH_W) '$(srcdir)/test/RegisterOperation.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-RegisterOperation.Tpo test/$(DEPDIR)/testIR-RegisterOperation.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/RegisterOperation.cpp' object='test/testIR-RegisterOperation.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-RegisterOperation.obj `if test -f 'test/RegisterOperation.cpp'; then $(CYGPATH_W) 'test/RegisterOperation.cpp'; else $(CYGPATH_W) '$(srcdir)/test/RegisterOperation.cpp'; fi`
 
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
