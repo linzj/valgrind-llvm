@@ -1,0 +1,5 @@
+rbx = 0xaaaa
+%%
+IR_EXIT 0xa0b0c0d0
+%%
+CheckEqual rip 0xa0b0c0d0
