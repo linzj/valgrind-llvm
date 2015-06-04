@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <string.h>
 #include <string>
+#include <sys/mman.h>
 extern "C" {
 #include <libvex.h>
 #include <libvex_ir.h>
@@ -215,8 +216,42 @@ static size_t genVex(IRSB* irsb, HChar* buffer, size_t len)
     return out_used;
 }
 
+static void initGuestState(VexGuestAMD64State& state)
+{
+    memset(&state, 0, sizeof(state));
+    state.host_EvC_COUNTER = 0xffff;
+}
+
+static void checkRun(const char* who, const uintptr_t* twoWords, const VexGuestAMD64State& guestState)
+{
+    LOGE("check %s okay.\n", who);
+}
+
+static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
+{
+    for (auto stmt : context.m_statments)
+        addStmtToIRSB(irsb, stmt);
+    irsb->next = IRExpr_Get(offsetof(VexGuestAMD64State, guest_RIP), Ity_I64);
+}
+
 int main()
 {
+    IRContextInternal context;
+    vexSetAllocModeTEMP_and_clear();
+    yylex_init_extra(&context, &context.m_scanner);
+    yyparse(&context);
+    yylex_destroy(context.m_scanner);
+
+    // allocate executable memory
+    static const size_t execMemSize = 4096;
+    void* execMem = mmap(nullptr, execMemSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    EMASSERT(execMem != MAP_FAILED);
+
+    IRSB* irsb;
+    irsb = emptyIRSB();
+    fillIRSB(irsb, context);
+    VexGuestAMD64State guestState;
+
     VexControl clo_vex_control;
     LibVEX_default_VexControl(&clo_vex_control);
     clo_vex_control.iropt_unroll_thresh = 400;
@@ -229,16 +264,10 @@ int main()
         1, /* debug_paranoia */
         False,
         &clo_vex_control);
-    IRContextInternal context;
-    vexSetAllocModeTEMP_and_clear();
-    yylex_init_extra(&context, &context.m_scanner);
-    yyparse(&context);
-    yylex_destroy(context.m_scanner);
-
-    IRSB* irsb;
-    irsb = emptyIRSB();
-    std::vector<HChar> buffer;
-    buffer.resize(4096);
-    size_t generatedBytes = genVex(irsb, const_cast<HChar*>(buffer.data()), buffer.size());
+    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
+    uintptr_t twoWords[2];
+    initGuestState(guestState);
+    vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
+    checkRun("vex", twoWords, guestState);
     return 0;
 }

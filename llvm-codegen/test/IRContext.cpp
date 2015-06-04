@@ -12,7 +12,7 @@ extern "C" {
 
 void contextSawIRExit(struct IRContext* context)
 {
-    IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U64(1)), Ijk_Boring, IRConst_U64(reinterpret_cast<uint64_t>(helperIRExit)), offsetof(VexGuestAMD64State, guest_RIP));
+    IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U1(1)), Ijk_Boring, IRConst_U64(reinterpret_cast<uint64_t>(helperIRExit)), offsetof(VexGuestAMD64State, guest_RIP));
     PUSH_BACK(stmt);
     LOGE("saw ir exit\n");
 }
