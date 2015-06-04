@@ -5,6 +5,9 @@
 #include <string>
 extern "C" {
 #include <libvex.h>
+#include <libvex_ir.h>
+#include <VEX/priv/main_util.h>
+#include <VEX/priv/host_generic_regs.h>
 #include <libvex_trc_values.h>
 #include <libvex_guest_amd64.h>
 }
@@ -37,7 +40,7 @@ void log_bytes(HChar* bytes, Int nbytes)
     s.append(bytes, nbytes);
     size_t found;
     while ((found = s.find('\n')) != std::string::npos) {
-        LOGE("%s.\n", s.substr(0, found));
+        LOGE("%s.\n", s.substr(0, found).c_str());
         s = s.substr(found + 1);
     }
 }
@@ -46,9 +49,9 @@ int main()
 {
     VexControl clo_vex_control;
     LibVEX_default_VexControl(&clo_vex_control);
-    clo_vex_control.iropt_unroll_thresh = 4000;
-    clo_vex_control.guest_max_insns = 1000;
-    clo_vex_control.guest_chase_thresh = 999;
+    clo_vex_control.iropt_unroll_thresh = 400;
+    clo_vex_control.guest_max_insns = 100;
+    clo_vex_control.guest_chase_thresh = 99;
     clo_vex_control.iropt_register_updates = VexRegUpdSpAtMemAccess;
 
     // use define control to init vex.
@@ -61,5 +64,20 @@ int main()
     yylex_init_extra(&context, &context.m_scanner);
     yyparse(&context);
     yylex_destroy(context.m_scanner);
+    Bool (*isMove)(HInstr*, HReg*, HReg*);
+    void (*getRegUsage)(HRegUsage*, HInstr*, Bool);
+    void (*mapRegs)(HRegRemap*, HInstr*, Bool);
+    void (*genSpill)(HInstr**, HInstr**, HReg, Int, Bool);
+    void (*genReload)(HInstr**, HInstr**, HReg, Int, Bool);
+    HInstr* (*directReload)(HInstr*, HReg, Short);
+    void (*ppInstr)(HInstr*, Bool);
+    void (*ppReg)(HReg);
+    HInstrArray* (*iselSB)(IRSB*, VexArch, VexArchInfo*, VexAbiInfo*,
+        Int, Int, Bool, Bool, Addr64);
+    Int (*emit)(/*MB_MOD*/ Bool*,
+        UChar*, Int, HInstr*, Bool, VexEndness,
+        void*, void*, void*, void*);
+    IRExpr* (*specHelper)(const HChar*, IRExpr**, IRStmt**, Int);
+    Bool (*preciseMemExnsFn)(Int, Int);
     return 0;
 }

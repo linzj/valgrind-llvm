@@ -19,10 +19,14 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
 	llvm/Link.cpp \
+	llvm/log.cpp \
 	isel_amd64.cpp
 
 AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@ += \
 	-I$(top_srcdir)/llvm-codegen/llvm
+
+AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@ = \
+	-DLLVMLOG_LEVEL=0
 
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_SOURCES = \
     $(LLVMCODEGEN_SOURCES_COMMON)
@@ -57,4 +61,5 @@ testIR_CXXFLAGS = \
 	-std=c++11
 
 testIR_LDADD = \
-	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a

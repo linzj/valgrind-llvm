@@ -114,14 +114,14 @@ extern void ppHRegClass ( HRegClass );
 extern void ppHReg ( HReg );
 
 /* Construct/destruct. */
-static inline HReg mkHReg ( UInt regno, HRegClass rc, Bool virtual ) {
+static inline HReg mkHReg ( UInt regno, HRegClass rc, Bool virtual_ ) {
    UInt r24 = regno & 0x00FFFFFF;
    /* This is critical.  The register number field may only
       occupy 24 bits. */
    if (r24 != regno)
       vpanic("mkHReg: regno exceeds 2^24");
    HReg r;
-   r.reg = regno | (((UInt)rc) << 28) | (virtual ? (1<<24) : 0);
+   r.reg = regno | (((UInt)rc) << 28) | (virtual_ ? (1<<24) : 0);
    return r;
 }
 

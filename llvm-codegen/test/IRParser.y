@@ -29,7 +29,6 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 input:
   %empty
 | input line
-| ERR
 ;
 
 line:

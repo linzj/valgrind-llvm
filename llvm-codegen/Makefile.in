@@ -151,6 +151,7 @@ am__objects_1 = llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-InitializeLL
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Compile.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.$(OBJEXT) \
+	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-log.$(OBJEXT) \
 	libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.$(OBJEXT)
 am_libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS =  \
 	$(am__objects_1)
@@ -162,10 +163,12 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS =  \
 	$(nodist_libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
-	test/testIR-main.$(OBJEXT) test/testIR-IRParser.$(OBJEXT) \
-	test/testIR-IRScanner.$(OBJEXT)
+	test/testIR-main.$(OBJEXT) test/testIR-Helpers.$(OBJEXT) \
+	test/testIR-IRParser.$(OBJEXT) test/testIR-IRScanner.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
-testIR_LDADD = $(LDADD)
+testIR_DEPENDENCIES =  \
+	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
 testIR_LINK = $(CXXLD) $(testIR_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -585,7 +588,11 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
 	llvm/Link.cpp \
+	llvm/log.cpp \
 	isel_amd64.cpp
+
+AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@ = \
+	-DLLVMLOG_LEVEL=0
 
 libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_SOURCES = \
     $(LLVMCODEGEN_SOURCES_COMMON)
@@ -609,6 +616,7 @@ libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS = \
 testIR_SOURCES = \
 	test/IRContext.cpp \
 	test/main.cpp \
+	test/Helpers.cpp \
 	test/IRParser.y \
 	test/IRScanner.l
 
@@ -619,6 +627,10 @@ testIR_CPPFLAGS = \
 testIR_CXXFLAGS = \
     $(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
 	-std=c++11
+
+testIR_LDADD = \
+	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
 
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -770,6 +782,8 @@ test/testIR-IRContext.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-main.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-Helpers.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRParser.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRScanner.$(OBJEXT): test/$(am__dirstamp) \
@@ -798,6 +812,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-Helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRContext.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRScanner.Po@am__quote@
@@ -1044,6 +1059,20 @@ test/testIR-main.obj: test/main.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/main.cpp' object='test/testIR-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-main.obj `if test -f 'test/main.cpp'; then $(CYGPATH_W) 'test/main.cpp'; else $(CYGPATH_W) '$(srcdir)/test/main.cpp'; fi`
+
+test/testIR-Helpers.o: test/Helpers.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-Helpers.o -MD -MP -MF test/$(DEPDIR)/testIR-Helpers.Tpo -c -o test/testIR-Helpers.o `test -f 'test/Helpers.cpp' || echo '$(srcdir)/'`test/Helpers.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-Helpers.Tpo test/$(DEPDIR)/testIR-Helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/Helpers.cpp' object='test/testIR-Helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-Helpers.o `test -f 'test/Helpers.cpp' || echo '$(srcdir)/'`test/Helpers.cpp
+
+test/testIR-Helpers.obj: test/Helpers.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-Helpers.obj -MD -MP -MF test/$(DEPDIR)/testIR-Helpers.Tpo -c -o test/testIR-Helpers.obj `if test -f 'test/Helpers.cpp'; then $(CYGPATH_W) 'test/Helpers.cpp'; else $(CYGPATH_W) '$(srcdir)/test/Helpers.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-Helpers.Tpo test/$(DEPDIR)/testIR-Helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/Helpers.cpp' object='test/testIR-Helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-Helpers.obj `if test -f 'test/Helpers.cpp'; then $(CYGPATH_W) 'test/Helpers.cpp'; else $(CYGPATH_W) '$(srcdir)/test/Helpers.cpp'; fi`
 
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
