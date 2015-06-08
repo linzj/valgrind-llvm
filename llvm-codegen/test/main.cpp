@@ -244,8 +244,8 @@ static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
 
 int main()
 {
-    IRContextInternal context;
     vexSetAllocModeTEMP_and_clear();
+    IRContextInternal context;
     yylex_init_extra(&context, &context.m_scanner);
     yyparse(&context);
     yylex_destroy(context.m_scanner);

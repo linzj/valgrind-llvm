@@ -52,7 +52,7 @@ void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
     auto&& tmpMap = CONTEXT()->getTempMap();
     auto found = tmpMap.find(id);
     IRTemp tmp;
-    if (found == tmpMap.end()) {
+    if (found != tmpMap.end()) {
         tmp = found->second;
     }
     else {

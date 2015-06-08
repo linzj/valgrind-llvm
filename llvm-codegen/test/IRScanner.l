@@ -31,7 +31,6 @@ IREXP_CONST CONST
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
-ADDR 0x[[:xdigit:]]{1,16}
 EQUAL =
 LEFT_BRACKET \(
 RIGHT_BRACKET \)
@@ -43,8 +42,9 @@ SEPARATOR \%\%
 COMMA ,
 %%
 {IRST_EXIT}           return IRST_EXIT;
-{IREXP_CONST}           return IREXP_CONST;
 {IRST_PUT}           return IRST_PUT;
+{IREXP_CONST}           return IREXP_CONST;
+{IREXP_RDTMP}           return IREXP_RDTMP;
 {COMMA}           return COMMA;
 {CHECKEQ}           return CHECKEQ;
 {CHECKSTATE}        return CHECKSTATE;
@@ -53,14 +53,12 @@ COMMA ,
                         return REGISTER_NAME;
                     %}
 {EQUAL}             return EQUAL;
+{LEFT_BRACKET}      return LEFT_BRACKET;
+{RIGHT_BRACKET}     return RIGHT_BRACKET;
 {NEWLINE}           return NEWLINE;
 {SPACE}            %{
                    %}
 {SEPARATOR}         return SEPARATOR;
-{ADDR}              %{
-                        yylval->num = strtoull(yytext, NULL, 16);
-                        return ADDR;
-                    %}
 {INTNUM}            %{
                         yylval->num = strtoull(yytext, NULL, 0);
                         return INTNUM;

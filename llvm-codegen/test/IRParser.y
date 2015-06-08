@@ -30,7 +30,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 %token IRST_PUT IRST_EXIT
 %token IREXP_CONST IREXP_RDTMP
 
-%token <num> ADDR INTNUM 
+%token <num> INTNUM
 %token <text> REGISTER_NAME IDENTIFIER
 
 %type <any> expression
@@ -55,7 +55,7 @@ register_init_statment NEWLINE
 ;
 
 register_init_statment:
-    REGISTER_NAME EQUAL ADDR {
+    REGISTER_NAME EQUAL INTNUM {
         contextSawRegisterInit(context, $1, $3);
         free($1);
     }
@@ -73,7 +73,7 @@ statement NEWLINE
 ;
 
 statement
-    : IRST_EXIT ADDR {
+    : IRST_EXIT INTNUM {
         contextSawIRExit(context, $2);
     }
     | IDENTIFIER EQUAL expression {
@@ -112,7 +112,7 @@ check_statment NEWLINE
 ;
 
 check_statment:
-    CHECKEQ REGISTER_NAME ADDR {
+    CHECKEQ REGISTER_NAME INTNUM {
         contextSawCheckRegisterConst(context, $2, $3);
         free($2);
     }
@@ -121,7 +121,7 @@ check_statment:
         free($2);
         free($3);
     }
-| CHECKSTATE ADDR ADDR {
+| CHECKSTATE INTNUM INTNUM {
         contextSawChecktState(context, $2, $3);
     }
 ;
