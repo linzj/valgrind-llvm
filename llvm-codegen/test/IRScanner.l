@@ -40,6 +40,10 @@ NEWLINE [\n\r\f]
 SPACE [[:space:]]+
 SEPARATOR \%\%
 COMMA ,
+PLUS \+
+MINUS \-
+MULTIPLE \*
+DIVIDE \/
 %%
 {IRST_EXIT}           return IRST_EXIT;
 {IRST_PUT}           return IRST_PUT;
@@ -55,6 +59,10 @@ COMMA ,
 {EQUAL}             return EQUAL;
 {LEFT_BRACKET}      return LEFT_BRACKET;
 {RIGHT_BRACKET}     return RIGHT_BRACKET;
+{PLUS}              return PLUS;
+{MINUS}             return MINUS;
+{MULTIPLE}          return MULTIPLE;
+{DIVIDE}            return DIVIDE;
 {NEWLINE}           return NEWLINE;
 {SPACE}            %{
                    %}

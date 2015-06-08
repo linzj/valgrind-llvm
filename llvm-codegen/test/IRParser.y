@@ -26,6 +26,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 %token NEWLINE ERR COMMA
 %token SEPARATOR EQUAL CHECKSTATE CHECKEQ
 %token LEFT_BRACKET RIGHT_BRACKET
+%token PLUS MINUS MULTIPLE DIVIDE
 
 %token IRST_PUT IRST_EXIT
 %token IREXP_CONST IREXP_RDTMP
@@ -34,6 +35,10 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 %token <text> REGISTER_NAME IDENTIFIER
 
 %type <any> expression
+%type <num> numberic_expression
+
+%left PLUS MINUS
+%left MULTIPLE DIVIDE
 
 %start input
 %%
@@ -55,7 +60,7 @@ register_init_statment NEWLINE
 ;
 
 register_init_statment:
-    REGISTER_NAME EQUAL INTNUM {
+    REGISTER_NAME EQUAL numberic_expression {
         contextSawRegisterInit(context, $1, $3);
         free($1);
     }
@@ -73,20 +78,20 @@ statement NEWLINE
 ;
 
 statement
-    : IRST_EXIT INTNUM {
+    : IRST_EXIT numberic_expression {
         contextSawIRExit(context, $2);
     }
     | IDENTIFIER EQUAL expression {
         contextSawIRWr(context, $1, $3);
         free($1);
     }
-    | IRST_PUT LEFT_BRACKET INTNUM COMMA expression RIGHT_BRACKET {
+    | IRST_PUT LEFT_BRACKET numberic_expression COMMA expression RIGHT_BRACKET {
         contextSawIRPutExpr(context, $3, $5);
     }
     ;
 
 expression
-    : IREXP_CONST LEFT_BRACKET INTNUM RIGHT_BRACKET {
+    : IREXP_CONST LEFT_BRACKET numberic_expression RIGHT_BRACKET {
         $$ = contextNewConstExpr(context, $3);
         if ($$ == NULL) {
             YYABORT;
@@ -101,6 +106,27 @@ expression
     }
     ;
 
+numberic_expression
+    : INTNUM {
+        $$ = $1;
+    }
+    | numberic_expression PLUS numberic_expression {
+        $$ = $1 + $3;
+    }
+    | numberic_expression MINUS numberic_expression {
+        $$ = $1 - $3;
+    }
+    | numberic_expression MULTIPLE numberic_expression {
+        $$ = $1 * $3;
+    }
+    | numberic_expression DIVIDE numberic_expression {
+        $$ = $1 / $3;
+    }
+    | LEFT_BRACKET numberic_expression RIGHT_BRACKET {
+        $$ = $2;
+    }
+    ;
+
 check_statment_list:
     NEWLINE
 | check_statment_line
@@ -112,7 +138,7 @@ check_statment NEWLINE
 ;
 
 check_statment:
-    CHECKEQ REGISTER_NAME INTNUM {
+    CHECKEQ REGISTER_NAME numberic_expression {
         contextSawCheckRegisterConst(context, $2, $3);
         free($2);
     }
@@ -121,7 +147,7 @@ check_statment:
         free($2);
         free($3);
     }
-| CHECKSTATE INTNUM INTNUM {
+| CHECKSTATE numberic_expression numberic_expression {
         contextSawChecktState(context, $2, $3);
     }
 ;
