@@ -1,7 +1,7 @@
 rbx = 0xaaaa
 rcx = 0xaaaa
 %%
-IR_EXIT 0xa0b0c0d0
+EXIT 0xa0b0c0d0
 %%
 CheckEqual rip 0xa0b0c0d0
 CheckEqual rbx 0xaaaa

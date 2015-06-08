@@ -11,6 +11,7 @@
 %union {
     unsigned long long num;
     char* text;
+    void* any;
 }
 
 %{
@@ -22,10 +23,17 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 #define scanner context->m_scanner
 %}
 
-%token IR_EXIT NEWLINE ERR SPACE
+%token NEWLINE ERR SPACE COMMA
 %token SEPARATOR EQUAL CHECKSTATE CHECKEQ
+%token LEFT_BRACKET INTNUM RIGHT_BRACKET
+
+%token IRST_PUT IRST_EXIT
+%token IREXP_CONST
+
 %token <num> ADDR
-%token <text> REGISTER_NAME
+%token <text> REGISTER_NAME IDENTIFIER
+
+%type <any> expression
 
 %start input
 %%
@@ -65,8 +73,31 @@ statement NEWLINE
 ;
 
 statement
-    : IR_EXIT SPACE ADDR {
+    : IRST_EXIT SPACE ADDR {
         contextSawIRExit(context, $3);
+    }
+    | IDENTIFIER SPACE EQUAL SPACE expression {
+        contextSawIRWr(context, $1, $5);
+        free($1);
+    }
+    | IRPUT LEFT_BRACKET INTNUM COMMA SPACE expression RIGHT_BRACKET {
+        contextSawIRPutExpr(context, $3, $6);
+    }
+    ;
+
+expression
+    : IREXP_CONST LEFT_BRACKET INTNUM RIGHT_BRACKET {
+        $$ = contextNewConstExpr(context, $3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_RDTMP LEFT_BRACKET IDENTIFIER RIGHT_BRACKET {
+        $$ = contextNewRdTmpExpr(context, $3);
+        free($3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
     }
     ;
 

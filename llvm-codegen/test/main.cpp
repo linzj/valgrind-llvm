@@ -239,8 +239,6 @@ static void checkRun(const char* who, const IRContextInternal& context, const ui
 
 static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
 {
-    for (auto stmt : context.m_statments)
-        addStmtToIRSB(irsb, stmt);
     irsb->next = IRExpr_Get(offsetof(VexGuestState, guest_RIP), Ity_I64);
 }
 
@@ -257,8 +255,7 @@ int main()
     void* execMem = mmap(nullptr, execMemSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     EMASSERT(execMem != MAP_FAILED);
 
-    IRSB* irsb;
-    irsb = emptyIRSB();
+    IRSB* irsb = context.m_irsb;
     fillIRSB(irsb, context);
     VexGuestState guestState;
 

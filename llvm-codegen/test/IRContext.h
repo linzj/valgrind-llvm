@@ -12,6 +12,10 @@ void contextSawRegisterInit(struct IRContext* context, const char* registerName,
 void contextSawCheckRegisterConst(struct IRContext* context, const char* registerName, unsigned long long val);
 void contextSawCheckRegister(struct IRContext* context, const char* registerName1, const char* registerName2);
 void contextSawChecktState(struct IRContext* context, unsigned long long val1, unsigned long long val2);
+void contextSawIRWr(struct IRContext* context, const char* id, void* expr);
+void contextSawIRPutExpr(struct IRContext* context, unsigned long long where, void* expr);
+void* contextNewConstExpr(struct IRContext* context, unsigned long long val);
+void* contextNewRdTmpExpr(struct IRContext* context, const char* name);
 void contextYYError(int line, int column, struct IRContext* context, const char* reason);
 #ifdef __cplusplus
 }
