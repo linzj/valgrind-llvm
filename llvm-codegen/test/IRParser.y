@@ -23,14 +23,14 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 #define scanner context->m_scanner
 %}
 
-%token NEWLINE ERR SPACE COMMA
+%token NEWLINE ERR COMMA
 %token SEPARATOR EQUAL CHECKSTATE CHECKEQ
-%token LEFT_BRACKET INTNUM RIGHT_BRACKET
+%token LEFT_BRACKET RIGHT_BRACKET
 
 %token IRST_PUT IRST_EXIT
-%token IREXP_CONST
+%token IREXP_CONST IREXP_RDTMP
 
-%token <num> ADDR
+%token <num> ADDR INTNUM 
 %token <text> REGISTER_NAME IDENTIFIER
 
 %type <any> expression
@@ -55,8 +55,8 @@ register_init_statment NEWLINE
 ;
 
 register_init_statment:
-    REGISTER_NAME SPACE EQUAL SPACE ADDR {
-        contextSawRegisterInit(context, $1, $5);
+    REGISTER_NAME EQUAL ADDR {
+        contextSawRegisterInit(context, $1, $3);
         free($1);
     }
 ;
@@ -73,15 +73,15 @@ statement NEWLINE
 ;
 
 statement
-    : IRST_EXIT SPACE ADDR {
-        contextSawIRExit(context, $3);
+    : IRST_EXIT ADDR {
+        contextSawIRExit(context, $2);
     }
-    | IDENTIFIER SPACE EQUAL SPACE expression {
-        contextSawIRWr(context, $1, $5);
+    | IDENTIFIER EQUAL expression {
+        contextSawIRWr(context, $1, $3);
         free($1);
     }
-    | IRPUT LEFT_BRACKET INTNUM COMMA SPACE expression RIGHT_BRACKET {
-        contextSawIRPutExpr(context, $3, $6);
+    | IRST_PUT LEFT_BRACKET INTNUM COMMA expression RIGHT_BRACKET {
+        contextSawIRPutExpr(context, $3, $5);
     }
     ;
 
@@ -112,17 +112,17 @@ check_statment NEWLINE
 ;
 
 check_statment:
-    CHECKEQ SPACE REGISTER_NAME SPACE ADDR {
-        contextSawCheckRegisterConst(context, $3, $5);
+    CHECKEQ REGISTER_NAME ADDR {
+        contextSawCheckRegisterConst(context, $2, $3);
+        free($2);
+    }
+|   CHECKEQ REGISTER_NAME REGISTER_NAME {
+        contextSawCheckRegister(context, $2, $3);
+        free($2);
         free($3);
     }
-|   CHECKEQ SPACE REGISTER_NAME SPACE REGISTER_NAME {
-        contextSawCheckRegister(context, $3, $5);
-        free($3);
-        free($5);
-    }
-| CHECKSTATE SPACE ADDR SPACE ADDR {
-        contextSawChecktState(context, $3, $5);
+| CHECKSTATE ADDR ADDR {
+        contextSawChecktState(context, $2, $3);
     }
 ;
 %%

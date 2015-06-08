@@ -19,7 +19,7 @@ struct IRContextInternal : IRContext {
     TempMapPtr m_tempMap;
     IRSB* m_irsb;
     IRContextInternal();
-    inline TempMap& getTempMap()
+    inline TmpMap& getTempMap()
     {
         if (!m_tempMap) {
             m_tempMap.reset(new TmpMap);

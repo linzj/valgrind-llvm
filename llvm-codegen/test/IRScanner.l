@@ -27,6 +27,7 @@ ident           -?{nmstart}{nmchar}*
 IRST_EXIT EXIT
 IRST_PUT PUT
 IREXP_RDTMP RDTMP
+IREXP_CONST CONST
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
@@ -53,7 +54,8 @@ COMMA ,
                     %}
 {EQUAL}             return EQUAL;
 {NEWLINE}           return NEWLINE;
-{SPACE}             return SPACE;
+{SPACE}            %{
+                   %}
 {SEPARATOR}         return SEPARATOR;
 {ADDR}              %{
                         yylval->num = strtoull(yytext, NULL, 16);

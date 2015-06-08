@@ -54,21 +54,40 @@ void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
     IRTemp tmp;
     if (found == tmpMap.end()) {
         tmp = found->second;
-    } else {
-        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I32);
+    }
+    else {
+        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I64);
         tmpMap[id] = tmp;
     }
-    IRStmt stmt = IRStmt_WrTmp(tmp, static_cast<IRExpr*>(expr));
+    IRStmt* stmt = IRStmt_WrTmp(tmp, static_cast<IRExpr*>(expr));
     PUSH_BACK_STMT(stmt);
 }
 
 void contextSawIRPutExpr(struct IRContext* context, unsigned long long where, void* expr)
 {
     LOGE("%s: where = %llu, expr = %p.\n", __FUNCTION__, where, expr);
+    IRStmt* stmt = IRStmt_Put(where, static_cast<IRExpr*>(expr));
+    PUSH_BACK_STMT(stmt);
 }
 
-void* contextNewConstExpr(struct IRContext* context, unsigned long long val);
-void* contextNewRdTmpExpr(struct IRContext* context, const char* name);
+void* contextNewConstExpr(struct IRContext* context, unsigned long long val)
+{
+    LOGE("%s: val = %llu.\n", __FUNCTION__, val);
+    IRExpr* expr = IRExpr_Const(IRConst_U64(val));
+    return expr;
+}
+
+void* contextNewRdTmpExpr(struct IRContext* context, const char* id)
+{
+    LOGE("%s: name = %s.\n", __FUNCTION__, id);
+
+    auto&& tmpMap = CONTEXT()->getTempMap();
+    auto found = tmpMap.find(id);
+    if (found == tmpMap.end()) {
+        return nullptr;
+    }
+    return IRExpr_RdTmp(found->second);
+}
 
 void contextYYError(int line, int column, struct IRContext* context, const char* reason)
 {
