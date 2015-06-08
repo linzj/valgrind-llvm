@@ -55,6 +55,7 @@ testIR_SOURCES = \
 	test/Check.cpp \
 	test/IRParser.y \
 	test/IRScanner.l \
+	test/IRContextInternal.cpp \
 	test/dispatch_vex.S
 
 testIR_CPPFLAGS = \

@@ -11,6 +11,7 @@
 %union {
     unsigned long long num;
     char* text;
+    void* any;
 }
 
 %{
@@ -22,10 +23,17 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 #define scanner context->m_scanner
 %}
 
-%token IR_EXIT NEWLINE ERR SPACE
+%token NEWLINE ERR COMMA
 %token SEPARATOR EQUAL CHECKSTATE CHECKEQ
-%token <num> ADDR
-%token <text> REGISTER_NAME
+%token LEFT_BRACKET RIGHT_BRACKET
+
+%token IRST_PUT IRST_EXIT
+%token IREXP_CONST IREXP_RDTMP
+
+%token <num> INTNUM
+%token <text> REGISTER_NAME IDENTIFIER
+
+%type <any> expression
 
 %start input
 %%
@@ -47,8 +55,8 @@ register_init_statment NEWLINE
 ;
 
 register_init_statment:
-    REGISTER_NAME SPACE EQUAL SPACE ADDR {
-        contextSawRegisterInit(context, $1, $5);
+    REGISTER_NAME EQUAL INTNUM {
+        contextSawRegisterInit(context, $1, $3);
         free($1);
     }
 ;
@@ -65,8 +73,31 @@ statement NEWLINE
 ;
 
 statement
-    : IR_EXIT SPACE ADDR {
-        contextSawIRExit(context, $3);
+    : IRST_EXIT INTNUM {
+        contextSawIRExit(context, $2);
+    }
+    | IDENTIFIER EQUAL expression {
+        contextSawIRWr(context, $1, $3);
+        free($1);
+    }
+    | IRST_PUT LEFT_BRACKET INTNUM COMMA expression RIGHT_BRACKET {
+        contextSawIRPutExpr(context, $3, $5);
+    }
+    ;
+
+expression
+    : IREXP_CONST LEFT_BRACKET INTNUM RIGHT_BRACKET {
+        $$ = contextNewConstExpr(context, $3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_RDTMP LEFT_BRACKET IDENTIFIER RIGHT_BRACKET {
+        $$ = contextNewRdTmpExpr(context, $3);
+        free($3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
     }
     ;
 
@@ -81,17 +112,17 @@ check_statment NEWLINE
 ;
 
 check_statment:
-    CHECKEQ SPACE REGISTER_NAME SPACE ADDR {
-        contextSawCheckRegisterConst(context, $3, $5);
+    CHECKEQ REGISTER_NAME INTNUM {
+        contextSawCheckRegisterConst(context, $2, $3);
+        free($2);
+    }
+|   CHECKEQ REGISTER_NAME REGISTER_NAME {
+        contextSawCheckRegister(context, $2, $3);
+        free($2);
         free($3);
     }
-|   CHECKEQ SPACE REGISTER_NAME SPACE REGISTER_NAME {
-        contextSawCheckRegister(context, $3, $5);
-        free($3);
-        free($5);
-    }
-| CHECKSTATE SPACE ADDR SPACE ADDR {
-        contextSawChecktState(context, $3, $5);
+| CHECKSTATE INTNUM INTNUM {
+        contextSawChecktState(context, $2, $3);
     }
 ;
 %%

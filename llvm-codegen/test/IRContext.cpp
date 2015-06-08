@@ -7,7 +7,7 @@
 #define CONTEXT() \
     static_cast<struct IRContextInternal*>(context)
 #define PUSH_BACK_STMT(stmt) \
-    CONTEXT()->m_statments.push_back(stmt)
+    addStmtToIRSB(CONTEXT()->m_irsb, stmt)
 
 #define PUSH_BACK_REGINIT(name, val) \
     CONTEXT()->m_registerInit.push_back({ name, val })
@@ -44,6 +44,49 @@ void contextSawChecktState(struct IRContext* context, unsigned long long val1, u
 {
     LOGE("%s: val1 = %llx, val2 = %llx.\n", __FUNCTION__, val1, val2);
     PUSH_BACK_CHECK(Check::createCheckState(val1, val2));
+}
+
+void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
+{
+    LOGE("%s: id = %s, expr = %p.\n", __FUNCTION__, id, expr);
+    auto&& tmpMap = CONTEXT()->getTempMap();
+    auto found = tmpMap.find(id);
+    IRTemp tmp;
+    if (found != tmpMap.end()) {
+        tmp = found->second;
+    }
+    else {
+        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I64);
+        tmpMap[id] = tmp;
+    }
+    IRStmt* stmt = IRStmt_WrTmp(tmp, static_cast<IRExpr*>(expr));
+    PUSH_BACK_STMT(stmt);
+}
+
+void contextSawIRPutExpr(struct IRContext* context, unsigned long long where, void* expr)
+{
+    LOGE("%s: where = %llu, expr = %p.\n", __FUNCTION__, where, expr);
+    IRStmt* stmt = IRStmt_Put(where, static_cast<IRExpr*>(expr));
+    PUSH_BACK_STMT(stmt);
+}
+
+void* contextNewConstExpr(struct IRContext* context, unsigned long long val)
+{
+    LOGE("%s: val = %llu.\n", __FUNCTION__, val);
+    IRExpr* expr = IRExpr_Const(IRConst_U64(val));
+    return expr;
+}
+
+void* contextNewRdTmpExpr(struct IRContext* context, const char* id)
+{
+    LOGE("%s: name = %s.\n", __FUNCTION__, id);
+
+    auto&& tmpMap = CONTEXT()->getTempMap();
+    auto found = tmpMap.find(id);
+    if (found == tmpMap.end()) {
+        return nullptr;
+    }
+    return IRExpr_RdTmp(found->second);
 }
 
 void contextYYError(int line, int column, struct IRContext* context, const char* reason)

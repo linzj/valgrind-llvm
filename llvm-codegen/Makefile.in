@@ -166,7 +166,9 @@ am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
 	test/testIR-main.$(OBJEXT) test/testIR-Helpers.$(OBJEXT) \
 	test/testIR-RegisterAssign.$(OBJEXT) \
 	test/testIR-RegisterOperation.$(OBJEXT) \
-	test/testIR-IRParser.$(OBJEXT) test/testIR-IRScanner.$(OBJEXT) \
+	test/testIR-Check.$(OBJEXT) test/testIR-IRParser.$(OBJEXT) \
+	test/testIR-IRScanner.$(OBJEXT) \
+	test/testIR-IRContextInternal.$(OBJEXT) \
 	test/testIR-dispatch_vex.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
 testIR_DEPENDENCIES =  \
@@ -629,8 +631,10 @@ testIR_SOURCES = \
 	test/Helpers.cpp \
 	test/RegisterAssign.cpp \
 	test/RegisterOperation.cpp \
+	test/Check.cpp \
 	test/IRParser.y \
 	test/IRScanner.l \
+	test/IRContextInternal.cpp \
 	test/dispatch_vex.S
 
 testIR_CPPFLAGS = \
@@ -801,9 +805,13 @@ test/testIR-RegisterAssign.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-RegisterOperation.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-Check.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRParser.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-IRScanner.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+test/testIR-IRContextInternal.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/testIR-dispatch_vex.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
@@ -831,8 +839,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-Check.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-Helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRContext.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRContextInternal.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-IRScanner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-RegisterAssign.Po@am__quote@
@@ -1153,6 +1163,34 @@ test/testIR-RegisterOperation.obj: test/RegisterOperation.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/RegisterOperation.cpp' object='test/testIR-RegisterOperation.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-RegisterOperation.obj `if test -f 'test/RegisterOperation.cpp'; then $(CYGPATH_W) 'test/RegisterOperation.cpp'; else $(CYGPATH_W) '$(srcdir)/test/RegisterOperation.cpp'; fi`
+
+test/testIR-Check.o: test/Check.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-Check.o -MD -MP -MF test/$(DEPDIR)/testIR-Check.Tpo -c -o test/testIR-Check.o `test -f 'test/Check.cpp' || echo '$(srcdir)/'`test/Check.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-Check.Tpo test/$(DEPDIR)/testIR-Check.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/Check.cpp' object='test/testIR-Check.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-Check.o `test -f 'test/Check.cpp' || echo '$(srcdir)/'`test/Check.cpp
+
+test/testIR-Check.obj: test/Check.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-Check.obj -MD -MP -MF test/$(DEPDIR)/testIR-Check.Tpo -c -o test/testIR-Check.obj `if test -f 'test/Check.cpp'; then $(CYGPATH_W) 'test/Check.cpp'; else $(CYGPATH_W) '$(srcdir)/test/Check.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-Check.Tpo test/$(DEPDIR)/testIR-Check.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/Check.cpp' object='test/testIR-Check.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-Check.obj `if test -f 'test/Check.cpp'; then $(CYGPATH_W) 'test/Check.cpp'; else $(CYGPATH_W) '$(srcdir)/test/Check.cpp'; fi`
+
+test/testIR-IRContextInternal.o: test/IRContextInternal.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-IRContextInternal.o -MD -MP -MF test/$(DEPDIR)/testIR-IRContextInternal.Tpo -c -o test/testIR-IRContextInternal.o `test -f 'test/IRContextInternal.cpp' || echo '$(srcdir)/'`test/IRContextInternal.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-IRContextInternal.Tpo test/$(DEPDIR)/testIR-IRContextInternal.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/IRContextInternal.cpp' object='test/testIR-IRContextInternal.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-IRContextInternal.o `test -f 'test/IRContextInternal.cpp' || echo '$(srcdir)/'`test/IRContextInternal.cpp
+
+test/testIR-IRContextInternal.obj: test/IRContextInternal.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -MT test/testIR-IRContextInternal.obj -MD -MP -MF test/$(DEPDIR)/testIR-IRContextInternal.Tpo -c -o test/testIR-IRContextInternal.obj `if test -f 'test/IRContextInternal.cpp'; then $(CYGPATH_W) 'test/IRContextInternal.cpp'; else $(CYGPATH_W) '$(srcdir)/test/IRContextInternal.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) test/$(DEPDIR)/testIR-IRContextInternal.Tpo test/$(DEPDIR)/testIR-IRContextInternal.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test/IRContextInternal.cpp' object='test/testIR-IRContextInternal.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testIR_CPPFLAGS) $(CPPFLAGS) $(testIR_CXXFLAGS) $(CXXFLAGS) -c -o test/testIR-IRContextInternal.obj `if test -f 'test/IRContextInternal.cpp'; then $(CYGPATH_W) 'test/IRContextInternal.cpp'; else $(CYGPATH_W) '$(srcdir)/test/IRContextInternal.cpp'; fi`
 
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)

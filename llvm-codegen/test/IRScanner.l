@@ -11,17 +11,41 @@
 %option warn nodefault yylineno
 %option extra-type="struct IRContext*"
 
-IR_EXIT IR_EXIT
+h               [0-9a-fA-F]
+nonascii        [\200-\377]
+unicode         \\{h}{1,6}[ \t\r\n\f]?
+escape          {unicode}|\\[ -~\200-\377]
+nmstart         [_a-zA-Z]|{nonascii}|{escape}
+nmchar          [_a-zA-Z0-9-]|{nonascii}|{escape}
+string1         \"([^\n\r\f\\"]|\\{nl}|{escape})*\"
+string2         \'([^\n\r\f\\']|\\{nl}|{escape})*\'
+intnum          (0x)?[[:xdigit:]]+
+
+
+ident           -?{nmstart}{nmchar}*
+
+IRST_EXIT EXIT
+IRST_PUT PUT
+IREXP_RDTMP RDTMP
+IREXP_CONST CONST
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
-ADDR 0x[[:xdigit:]]{1,16}
 EQUAL =
+LEFT_BRACKET \(
+RIGHT_BRACKET \)
+IDENTIFIER {ident}
+INTNUM {intnum}
 NEWLINE [\n\r\f]
 SPACE [[:space:]]+
 SEPARATOR \%\%
+COMMA ,
 %%
-{IR_EXIT}           return IR_EXIT;
+{IRST_EXIT}           return IRST_EXIT;
+{IRST_PUT}           return IRST_PUT;
+{IREXP_CONST}           return IREXP_CONST;
+{IREXP_RDTMP}           return IREXP_RDTMP;
+{COMMA}           return COMMA;
 {CHECKEQ}           return CHECKEQ;
 {CHECKSTATE}        return CHECKSTATE;
 {REGISTER_NAME}     %{
@@ -29,12 +53,19 @@ SEPARATOR \%\%
                         return REGISTER_NAME;
                     %}
 {EQUAL}             return EQUAL;
+{LEFT_BRACKET}      return LEFT_BRACKET;
+{RIGHT_BRACKET}     return RIGHT_BRACKET;
 {NEWLINE}           return NEWLINE;
-{SPACE}             return SPACE;
+{SPACE}            %{
+                   %}
 {SEPARATOR}         return SEPARATOR;
-{ADDR}              %{
-                        yylval->num = strtoull(yytext, NULL, 16);
-                        return ADDR;
+{INTNUM}            %{
+                        yylval->num = strtoull(yytext, NULL, 0);
+                        return INTNUM;
+                    %}
+{IDENTIFIER}        %{
+                        yylval->text = strdup(yytext);
+                        return IDENTIFIER;
                     %}
 .                   %{
                         fprintf(stderr, "error string is %s.\n", yytext);
