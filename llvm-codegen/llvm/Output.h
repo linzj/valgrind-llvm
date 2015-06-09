@@ -15,11 +15,14 @@ public:
     LValue buildLoad(LValue toLoad);
     LValue buildStore(LValue val, LValue pointer);
     LValue buildAdd(LValue lhs, LValue rhs);
+    LValue buildAnd(LValue lhs, LValue rhs);
+    LValue buildShl(LValue lhs, LValue rhs);
     LValue buildBr(LBasicBlock bb);
     LValue buildRet(LValue ret);
     LValue buildRetVoid(void);
     LValue buildLoadArgIndex(int index);
     LValue buildStoreArgIndex(LValue val, int index);
+    LValue buildArgBytePointer();
     LValue buildSelect(LValue condition, LValue taken, LValue notTaken);
     LValue buildICmp(LIntPredicate cond, LValue left, LValue right);
 
@@ -58,6 +61,7 @@ public:
     inline LType argType() const { return m_argType; }
     inline LBasicBlock prologue() const { return m_prologue; }
     inline LValue arg() const { return m_arg; }
+    LType typeOf(LValue val) __attribute__((pure));
 
 private:
     void buildGetArg();

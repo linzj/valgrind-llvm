@@ -18,13 +18,17 @@ public:
 
     const LType voidType;
     const LType boolean;
+    const LType int1;
     const LType int8;
     const LType int16;
     const LType int32;
     const LType int64;
+    const LType int128;
     const LType intPtr;
     const LType floatType;
     const LType doubleType;
+    const LType v128Type;
+    const LType v256Type;
     const LType ref8;
     const LType ref16;
     const LType ref32;

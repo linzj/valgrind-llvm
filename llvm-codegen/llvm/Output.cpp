@@ -63,6 +63,16 @@ LValue Output::buildAdd(LValue lhs, LValue rhs)
     return jit::buildAdd(m_builder, lhs, rhs);
 }
 
+LValue Output::buildShl(LValue lhs, LValue rhs)
+{
+    return llvmAPI->BuildShl(m_builder, lhs, rhs, "");
+}
+
+LValue Output::buildAnd(LValue lhs, LValue rhs)
+{
+    return jit::buildAnd(m_builder, lhs, rhs);
+}
+
 LValue Output::buildBr(LBasicBlock bb)
 {
     return jit::buildBr(m_builder, bb);
@@ -129,6 +139,12 @@ LValue Output::buildStoreArgIndex(LValue val, int index)
     return buildStore(val, llvmAPI->BuildInBoundsGEP(m_builder, m_arg, constIndex, 2, ""));
 }
 
+LValue Output::buildArgBytePointer()
+{
+    LValue casted = buildCast(LLVMBitCast, m_arg, repo().ref8);
+    return casted;
+}
+
 LValue Output::buildSelect(LValue condition, LValue taken, LValue notTaken)
 {
     return jit::buildSelect(m_builder, condition, taken, notTaken);
@@ -137,5 +153,10 @@ LValue Output::buildSelect(LValue condition, LValue taken, LValue notTaken)
 LValue Output::buildICmp(LIntPredicate cond, LValue left, LValue right)
 {
     return jit::buildICmp(m_builder, cond, left, right);
+}
+
+LType Output::typeOf(LValue val)
+{
+    return llvmAPI->TypeOf(val);
 }
 }
