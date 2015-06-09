@@ -9,8 +9,15 @@ public:
     ~Output();
     LBasicBlock appendBasicBlock(const char* name = nullptr);
     void positionToBBEnd(LBasicBlock);
+    LValue constInt1(int);
+    LValue constInt16(int);
     LValue constInt32(int);
     LValue constInt64(long long);
+    LValue constInt128(long long);
+    LValue constFloat(double);
+    LValue constDouble(double);
+    LValue constV128(unsigned short);
+    LValue constV256(unsigned);
     LValue buildStructGEP(LValue structVal, unsigned field);
     LValue buildLoad(LValue toLoad);
     LValue buildStore(LValue val, LValue pointer);
@@ -54,6 +61,7 @@ public:
     LValue buildCast(LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy);
 
     void buildDirectPatch(uintptr_t where);
+    void buildDirectPatch(LValue where);
     void buildIndirectPatch(LValue where);
     void buildAssistPatch(LValue where);
 

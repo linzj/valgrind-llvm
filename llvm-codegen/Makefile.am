@@ -18,6 +18,7 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
+	llvm/VexTranslator.cpp \
 	llvm/Link.cpp \
 	llvm/log.cpp \
 	isel_amd64.cpp

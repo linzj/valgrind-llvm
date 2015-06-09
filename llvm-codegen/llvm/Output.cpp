@@ -33,6 +33,16 @@ void Output::positionToBBEnd(LBasicBlock bb)
     llvmAPI->PositionBuilderAtEnd(m_builder, bb);
 }
 
+LValue Output::constInt1(int val)
+{
+    return jit::constInt(repo().int1, val);
+}
+
+LValue Output::constInt16(int)
+{
+    return jit::constInt(repo().int16, val);
+}
+
 LValue Output::constInt32(int i)
 {
     return jit::constInt(m_repo.int32, i);
@@ -42,6 +52,37 @@ LValue Output::constInt64(long long l)
 {
     return jit::constInt(m_repo.int64, l);
 }
+
+LValue Output::constInt128(long long l)
+{
+    return jit::constInt(m_repo.int128, l);
+}
+
+LValue Output::constFloat(double val)
+{
+    return jit::constReal(m_repo.floatType, val);
+}
+
+LValue Output::constDouble(double)
+{
+    return jit::constReal(m_repo.doubleType, val);
+}
+
+LValue Output::constV128(unsigned short val)
+{
+    LValue tmp = constInt16(val);
+    LValue tmpArray[] = { tmp, tmp, tmp, tmp };
+    return llvmAPI->ConstVector(tmp, 4);
+}
+
+LValue Output::constV256(unsigned val)
+{
+    LValue tmp = constInt32(val);
+    LValue tmpArray[] = { tmp, tmp, tmp, tmp };
+    return llvmAPI->ConstVector(tmp, 4);
+}
+
+LValue constV256(unsigned);
 
 LValue Output::buildStructGEP(LValue structVal, unsigned field)
 {
@@ -102,6 +143,12 @@ void Output::buildDirectPatch(uintptr_t where)
 {
     PatchDesc desc = { PatchType::Direct };
     buildPatchCommon(constInt64(where), desc, m_state.m_platformDesc.m_directSize);
+}
+
+void Output::buildDirectPatch(LValue where)
+{
+    PatchDesc desc = { PatchType::Direct };
+    buildPatchCommon(where, desc, m_state.m_platformDesc.m_directSize);
 }
 
 void Output::buildIndirectPatch(LValue where)
