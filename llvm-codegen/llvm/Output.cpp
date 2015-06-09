@@ -151,6 +151,18 @@ void Output::buildDirectPatch(LValue where)
     buildPatchCommon(where, desc, m_state.m_platformDesc.m_directSize);
 }
 
+void Output::buildDirectSlowPatch(uintptr_t where)
+{
+    PatchDesc desc = { PatchType::DirectSlow };
+    buildPatchCommon(constInt64(where), desc, m_state.m_platformDesc.m_directSize);
+}
+
+void Output::buildDirectSlowPatch(LValue where)
+{
+    PatchDesc desc = { PatchType::DirectSlow };
+    buildPatchCommon(where, desc, m_state.m_platformDesc.m_directSize);
+}
+
 void Output::buildIndirectPatch(LValue where)
 {
     PatchDesc desc = { PatchType::Indirect };

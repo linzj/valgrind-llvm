@@ -3,27 +3,32 @@
 #include "VexHeaders.h"
 
 struct VexTranslatorEnv {
-    bool m_chainingAllow;
+    void* m_dispDirect;
+    void* m_dispDirectSlow;
+    void* m_dispIndirect;
+    void* m_dispAssist;
+    uintptr_t m_maxga;
 };
 
 class VexTranslator {
 public:
-    explicit VexTranslator(const VexTranslatorEnv&);
+    explicit VexTranslator();
     virtual ~VexTranslator();
 
     VexTranslator(const VexTranslator&) = delete;
     const VexTranslator& operator=(const VexTranslator&) = delete;
 
-    virtual bool translate(IRSB*) = 0;
+    virtual bool translate(IRSB*, const VexTranslatorEnv& env) = 0;
     inline const void* code() const { return m_code; }
     inline size_t code_size() const { return m_codeSize; }
-    inline const VexTranslator& env() const { return m_env; }
-    static VexTranslator* create(const VexTranslatorEnv&);
-
+    static bool init();
+    static VexTranslator* create();
+protected:
+    inline void setCode(const void* code) { m_code = code; }
+    inline void setCodeSize(size_t size) { m_codeSize = size; }
 private:
     const void* m_code;
     size_t m_codeSize;
-    VexTranslatorEnv m_env;
 };
 
 #endif /* VEXTRANSLATOR_H */

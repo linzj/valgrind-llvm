@@ -4,11 +4,13 @@
 #include <string.h>
 #include <string>
 #include <sys/mman.h>
+#include <memory>
 #include "VexHeaders.h"
 #include "IRContextInternal.h"
 #include "RegisterInit.h"
 #include "RegisterAssign.h"
 #include "Check.h"
+#include "VexTranslator.h"
 #include "log.h"
 
 extern "C" {
@@ -271,10 +273,14 @@ int main()
         1, /* debug_paranoia */
         False,
         &clo_vex_control);
-    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
     uintptr_t twoWords[2];
+    // run with vex;
+    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
     initGuestState(guestState, context);
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
     checkRun("vex", context, twoWords, guestState);
+    // run with llvm
+
+    // std::unique_ptr<VexTranslator> translator(VexTranslator::create(
     return 0;
 }

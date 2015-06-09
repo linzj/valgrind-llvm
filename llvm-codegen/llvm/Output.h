@@ -62,6 +62,8 @@ public:
 
     void buildDirectPatch(uintptr_t where);
     void buildDirectPatch(LValue where);
+    void buildDirectSlowPatch(uintptr_t where);
+    void buildDirectSlowPatch(LValue where);
     void buildIndirectPatch(LValue where);
     void buildAssistPatch(LValue where);
 
