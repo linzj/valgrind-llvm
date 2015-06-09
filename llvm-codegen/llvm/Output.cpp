@@ -38,7 +38,12 @@ LValue Output::constInt1(int val)
     return jit::constInt(repo().int1, val);
 }
 
-LValue Output::constInt16(int)
+LValue Output::constInt8(int val)
+{
+    return jit::constInt(repo().int8, val);
+}
+
+LValue Output::constInt16(int val)
 {
     return jit::constInt(repo().int16, val);
 }
@@ -63,7 +68,7 @@ LValue Output::constFloat(double val)
     return jit::constReal(m_repo.floatType, val);
 }
 
-LValue Output::constDouble(double)
+LValue Output::constDouble(double val)
 {
     return jit::constReal(m_repo.doubleType, val);
 }
@@ -72,14 +77,14 @@ LValue Output::constV128(unsigned short val)
 {
     LValue tmp = constInt16(val);
     LValue tmpArray[] = { tmp, tmp, tmp, tmp };
-    return llvmAPI->ConstVector(tmp, 4);
+    return llvmAPI->ConstVector(tmpArray, 4);
 }
 
 LValue Output::constV256(unsigned val)
 {
     LValue tmp = constInt32(val);
     LValue tmpArray[] = { tmp, tmp, tmp, tmp };
-    return llvmAPI->ConstVector(tmp, 4);
+    return llvmAPI->ConstVector(tmpArray, 4);
 }
 
 LValue constV256(unsigned);

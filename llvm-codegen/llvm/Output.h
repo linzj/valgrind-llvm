@@ -10,6 +10,7 @@ public:
     LBasicBlock appendBasicBlock(const char* name = nullptr);
     void positionToBBEnd(LBasicBlock);
     LValue constInt1(int);
+    LValue constInt8(int);
     LValue constInt16(int);
     LValue constInt32(int);
     LValue constInt64(long long);
@@ -75,7 +76,7 @@ public:
 
 private:
     void buildGetArg();
-    void buildPatchCommon(LValue where, const PatchDesc& desc, size_t patchSize);
+    void buildPatchCommon(LValue where, const struct PatchDesc& desc, size_t patchSize);
 
     CompilerState& m_state;
     IntrinsicRepository m_repo;

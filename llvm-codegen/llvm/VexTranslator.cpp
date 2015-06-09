@@ -1,5 +1,11 @@
 #include <unordered_map>
+#include <memory>
+#include "InitializeLLVM.h"
+#include "CompilerState.h"
+#include "Compile.h"
+#include "Link.h"
 #include "VexTranslator.h"
+#include "Registers.h"
 #include "Output.h"
 #include "log.h"
 
@@ -65,9 +71,9 @@ static uint8_t* emit64(uint8_t* p, uint64_t w64)
     return p + sizeof(w64);
 }
 
-class VexTranslatorImpl : public VexTranslator {
-    using namespace jit;
+typedef jit::CompilerState State;
 
+class VexTranslatorImpl : public VexTranslator {
 public:
     VexTranslatorImpl();
 
@@ -76,16 +82,16 @@ private:
     bool translateStmt(IRStmt* stmt);
     bool translateNext();
 
-    LValue genGuestArrayOffset(IRRegArray* descr,
+    jit::LValue genGuestArrayOffset(IRRegArray* descr,
         IRExpr* off, Int bias);
     bool translatePut(IRStmt* stmt);
     bool translatePutI(IRStmt* stmt);
     bool translateWrTmp(IRStmt* stmt);
 
-    LValue translateExpr(IRExpr* expr);
-    LValue translateRdTmp(IRExpr* expr);
-    LValue translateConst(IRExpr* expr);
-    inline void _ensureType(LValue val, IRType type) __attribute__((pure));
+    jit::LValue translateExpr(IRExpr* expr);
+    jit::LValue translateRdTmp(IRExpr* expr);
+    jit::LValue translateConst(IRExpr* expr);
+    inline void _ensureType(jit::LValue val, IRType type) __attribute__((pure));
 #define ensureType(val, type) \
     _ensureType(val, type)
 
@@ -93,13 +99,13 @@ private:
     static void patchDirect(void*, uint8_t* p, void*);
     static void patchIndirect(void*, uint8_t* p, void*);
     static void patchAssist(void*, uint8_t* p, void* entry);
-    typedef std::unordered_map<IRTemp, LValue> TmpValMap;
+    typedef std::unordered_map<IRTemp, jit::LValue> TmpValMap;
     jit::Output* m_output;
     IRSB* m_bb;
     const VexTranslatorEnv* m_env;
     TmpValMap m_tmpValMap;
     jit::ByteBuffer m_code;
-    std::unique_ptr<jit::State> m_state;
+    std::unique_ptr<State> m_state;
     bool m_chainingAllow;
 };
 
@@ -210,20 +216,16 @@ VexTranslatorImpl::VexTranslatorImpl()
 {
 }
 
-bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env) override
+bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env)
 {
     using namespace jit;
     PlatformDesc desc = {
         40 * sizeof(intptr_t), /* context size */
-        bb->offsIP, /* offset of pc */
+        static_cast<size_t>(bb->offsIP), /* offset of pc */
         11, /* prologue size */
         17, /* direct size */
         17, /* indirect size */
         17, /* assist size */
-        this, /* opaque */
-        patchProloge,
-        patchDirect,
-        patchAssist,
     };
     m_bb = bb;
 
@@ -232,7 +234,7 @@ bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env) overrid
     Output output(state);
     m_output = &output;
     m_env = &env;
-    if (env.m_dispFastChain && env.m_dispSlowChain) {
+    if (env.m_dispDirect && env.m_dispDirectSlow && env.m_dispIndirect) {
         m_chainingAllow = true;
     }
 
@@ -268,6 +270,7 @@ bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env) overrid
 
     m_bb = nullptr;
     m_output = nullptr;
+    m_env = nullptr;
     setCode(state.m_codeSectionList.front().data());
     setCodeSize(state.m_codeSectionList.front().size());
     return true;
@@ -296,9 +299,10 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     return false;
 }
 
-LValue VexTranslatorImpl::genGuestArrayOffset(IRRegArray* descr,
+jit::LValue VexTranslatorImpl::genGuestArrayOffset(IRRegArray* descr,
     IRExpr* off, Int bias)
 {
+    using namespace jit;
     LValue roff = translateExpr(off);
     LValue tmp = roff;
     Int elemSz = sizeofIRType(descr->elemTy);
@@ -310,13 +314,14 @@ LValue VexTranslatorImpl::genGuestArrayOffset(IRRegArray* descr,
     }
     tmp = m_output->buildAnd(m_output->constInt32(7), tmp);
     EMASSERT(elemSz == 1 || elemSz == 8);
-    tmp = m_output->buildShl(tmp, elemSz == 8 ? 3 : 0);
+    tmp = m_output->buildShl(tmp, m_output->constInt32(elemSz == 8 ? 3 : 0));
     tmp = m_output->buildAdd(tmp, m_output->constInt32(descr->base));
     return tmp;
 }
 
 bool VexTranslatorImpl::translatePut(IRStmt* stmt)
 {
+    using namespace jit;
     LValue expr = translateExpr(stmt->Ist.Put.data);
     m_output->buildStoreArgIndex(expr, stmt->Ist.Put.offset / sizeof(intptr_t));
     return true;
@@ -324,6 +329,7 @@ bool VexTranslatorImpl::translatePut(IRStmt* stmt)
 
 bool VexTranslatorImpl::translatePutI(IRStmt* stmt)
 {
+    using namespace jit;
     IRPutI* puti = stmt->Ist.PutI.details;
     LValue offset = genGuestArrayOffset(puti->descr,
         puti->ix, puti->bias);
@@ -354,15 +360,16 @@ bool VexTranslatorImpl::translatePutI(IRStmt* stmt)
 
 bool VexTranslatorImpl::translateWrTmp(IRStmt* stmt)
 {
+    using namespace jit;
     IRTemp tmp = stmt->Ist.WrTmp.tmp;
     LValue val = translateExpr(stmt->Ist.WrTmp.data);
-    ensureType(val, typeOfIRExpr(stmt->Ist.WrTmp.data));
+    ensureType(val, typeOfIRExpr(m_bb->tyenv, stmt->Ist.WrTmp.data));
     ensureType(val, typeOfIRTemp(m_bb->tyenv, tmp));
     m_tmpValMap[tmp] = val;
     return true;
 }
 
-void VexTranslatorImpl::_ensureType(LValue val, IRType type)
+void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)
 {
     switch (type) {
     case Ity_I1:
@@ -397,6 +404,7 @@ void VexTranslatorImpl::_ensureType(LValue val, IRType type)
 
 bool VexTranslatorImpl::translateNext()
 {
+    using namespace jit;
     IRExpr* next = m_bb->next;
     IRJumpKind jk = m_bb->jumpkind;
     /* Case: boring transfer to known address */
@@ -406,7 +414,7 @@ bool VexTranslatorImpl::translateNext()
         if (m_chainingAllow) {
 
             bool toFastEP
-                = ((Addr64)cdst->Ico.U64) > env->max_ga;
+                = ((Addr64)cdst->Ico.U64) > m_env->m_maxga;
             if (toFastEP)
                 m_output->buildDirectPatch(val);
             else
@@ -422,7 +430,7 @@ bool VexTranslatorImpl::translateNext()
     case Ijk_Boring:
     case Ijk_Ret:
     case Ijk_Call: {
-        if (env->chainingAllowed) {
+        if (m_chainingAllow) {
             m_output->buildIndirectPatch(val);
         }
         else {
@@ -461,7 +469,7 @@ bool VexTranslatorImpl::translateNext()
     vassert(0); // are we expecting any other kind?
 }
 
-LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
+jit::LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
 {
     switch (expr->tag) {
     case Iex_RdTmp: {
@@ -474,44 +482,44 @@ LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
     EMASSERT("not supported expr" && false);
 }
 
-LValue VexTranslatorImpl::translateRdTmp(IRExpr* expr)
+jit::LValue VexTranslatorImpl::translateRdTmp(IRExpr* expr)
 {
     auto found = m_tmpValMap.find(expr->Iex.RdTmp.tmp);
     EMASSERT(found != m_tmpValMap.end());
     return found->second;
 }
 
-LValue VexTranslatorImpl::translateConst(IRExpr* expr)
+jit::LValue VexTranslatorImpl::translateConst(IRExpr* expr)
 {
     IRConst* myconst = expr->Iex.Const.con;
     switch (myconst->tag) {
     case Ico_U1:
-        return m_output->constInt1(myconst->U1);
+        return m_output->constInt1(myconst->Ico.U1);
     case Ico_U8:
-        return m_output->constInt8(myconst->U8);
+        return m_output->constInt8(myconst->Ico.U8);
     case Ico_U16:
-        return m_output->constInt16(myconst->U16);
+        return m_output->constInt16(myconst->Ico.U16);
     case Ico_U32:
-        return m_output->constInt32(myconst->U32);
+        return m_output->constInt32(myconst->Ico.U32);
     case Ico_U64:
-        return m_output->constInt64(myconst->U64);
+        return m_output->constInt64(myconst->Ico.U64);
     case Ico_F32:
-        return m_output->constFloat(myconst->F32);
+        return m_output->constFloat(myconst->Ico.F32);
     case Ico_F64:
-        return m_output->constFloat(myconst->F64);
+        return m_output->constFloat(myconst->Ico.F64);
     case Ico_F32i: {
-        LValue val = m_output->constInt32(myconst->F32i);
+        jit::LValue val = m_output->constInt32(myconst->Ico.F32i);
         return m_output->buildCast(LLVMBitCast, val, m_output->repo().floatType);
     }
     case Ico_F64i: {
-        LValue val = m_output->constInt64(myconst->F64i);
+        jit::LValue val = m_output->constInt64(myconst->Ico.F64i);
         return m_output->buildCast(LLVMBitCast, val, m_output->repo().doubleType);
     }
     case Ico_V128:
-        return m_output->constV128(myconst->V128);
+        return m_output->constV128(myconst->Ico.V128);
 
     case Ico_V256:
-        return m_output->constV256(myconst->V256);
+        return m_output->constV256(myconst->Ico.V256);
     }
     EMASSERT("not supported constant" && false);
 }
