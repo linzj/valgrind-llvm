@@ -22,6 +22,7 @@ VexTranslator::~VexTranslator()
 bool VexTranslator::init()
 {
     initLLVM();
+    return true;
 }
 
 namespace {
@@ -220,7 +221,7 @@ bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env)
 {
     using namespace jit;
     PlatformDesc desc = {
-        40 * sizeof(intptr_t), /* context size */
+        env.m_contextSize,
         static_cast<size_t>(bb->offsIP), /* offset of pc */
         11, /* prologue size */
         17, /* direct size */
@@ -523,4 +524,9 @@ jit::LValue VexTranslatorImpl::translateConst(IRExpr* expr)
     }
     EMASSERT("not supported constant" && false);
 }
+}
+
+VexTranslator* VexTranslator::create()
+{
+    return new VexTranslatorImpl;
 }

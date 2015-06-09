@@ -69,4 +69,5 @@ testIR_CXXFLAGS = \
 
 testIR_LDADD = \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(LLVM_LIBS) -lz -lpthread -ldl -lcurses
