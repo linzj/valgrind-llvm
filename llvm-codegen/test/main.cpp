@@ -241,7 +241,8 @@ static void checkRun(const char* who, const IRContextInternal& context, const ui
 
 static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
 {
-    irsb->next = IRExpr_Get(offsetof(VexGuestState, guest_RIP), Ity_I64);
+    irsb->offsIP = offsetof(VexGuestState, guest_RIP);
+    irsb->next = IRExpr_Get(irsb->offsIP, Ity_I64);
 }
 
 int main()
