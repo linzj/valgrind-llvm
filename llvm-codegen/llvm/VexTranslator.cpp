@@ -88,6 +88,7 @@ private:
     bool translatePut(IRStmt* stmt);
     bool translatePutI(IRStmt* stmt);
     bool translateWrTmp(IRStmt* stmt);
+    bool translateExit(IRStmt* stmt);
 
     jit::LValue translateExpr(IRExpr* expr);
     jit::LValue translateRdTmp(IRExpr* expr);
@@ -293,6 +294,9 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     case Ist_WrTmp: {
         return translateWrTmp(stmt);
     } break;
+    case Ist_Exit: {
+        return translateExit(stmt);
+    }
     default:
         EMASSERT("not yet implement" && false);
         return false;
@@ -368,6 +372,52 @@ bool VexTranslatorImpl::translateWrTmp(IRStmt* stmt)
     ensureType(val, typeOfIRTemp(m_bb->tyenv, tmp));
     m_tmpValMap[tmp] = val;
     return true;
+}
+
+bool VexTranslatorImpl::translateExit(IRStmt* stmt)
+{
+    using namespace jit;
+    LValue guard = translateExpr(stmt->Ist.Exit.guard);
+    LBasicBlock bbt = m_output.appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output.appendBasicBlock("not_taken");
+    m_output.buildCondBr(guard, bbt, bbnt);
+    m_output.positionToBBEnd(bbt);
+    IRConst* cdst = stmt->Ist.Exit.dst;
+    LValue val = m_output.constIntPtr(static_cast<uint64_t>(cdst->Ico.U64));
+
+    if (stmt->Ist.Exit.jk == Ijk_Boring) {
+        if (m_chainingAllow) {
+            bool toFastEP
+                = ((Addr64)cdst->Ico.U64) > m_env->m_maxga;
+            if (toFastEP)
+                m_output->buildDirectPatch(val);
+            else
+                m_output->buildDirectSlowPatch(val);
+        }
+        else
+            m_output->buildAssistPatch(val);
+        return;
+    }
+
+    /* Case: assisted transfer to arbitrary address */
+    switch (stmt->Ist.Exit.jk) {
+    /* Keep this list in sync with that in iselNext below */
+    case Ijk_ClientReq:
+    case Ijk_EmWarn:
+    case Ijk_NoDecode:
+    case Ijk_NoRedir:
+    case Ijk_SigSEGV:
+    case Ijk_SigTRAP:
+    case Ijk_Sys_syscall:
+    case Ijk_InvalICache:
+    case Ijk_Yield: {
+        m_output->buildAssistPatch(val);
+        return;
+    }
+    default:
+        break;
+    }
+    m_output.positionToBBEnd(bbnt);
 }
 
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)

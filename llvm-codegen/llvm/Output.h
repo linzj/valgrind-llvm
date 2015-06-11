@@ -15,6 +15,7 @@ public:
     LValue constInt32(int);
     LValue constInt64(long long);
     LValue constInt128(long long);
+    LValue constIntPtr(uintptr_t);
     LValue constFloat(double);
     LValue constDouble(double);
     LValue constV128(unsigned short);
@@ -26,6 +27,7 @@ public:
     LValue buildAnd(LValue lhs, LValue rhs);
     LValue buildShl(LValue lhs, LValue rhs);
     LValue buildBr(LBasicBlock bb);
+    LValue buildCondBr(LValue condition, LBasicBlock taken, LBasicBlock notTaken);
     LValue buildRet(LValue ret);
     LValue buildRetVoid(void);
     LValue buildLoadArgIndex(int index);

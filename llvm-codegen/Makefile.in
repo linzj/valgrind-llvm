@@ -172,9 +172,11 @@ am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
 	test/testIR-IRContextInternal.$(OBJEXT) \
 	test/testIR-dispatch_vex.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
+am__DEPENDENCIES_1 =
 testIR_DEPENDENCIES =  \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(am__DEPENDENCIES_1)
 testIR_LINK = $(CXXLD) $(testIR_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -649,7 +651,8 @@ testIR_CXXFLAGS = \
 
 testIR_LDADD = \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(LLVM_LIBS) -lz -lpthread -ldl -lcurses
 
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am

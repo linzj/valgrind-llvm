@@ -63,6 +63,11 @@ LValue Output::constInt128(long long l)
     return jit::constInt(m_repo.int128, l);
 }
 
+LValue Output::constIntPtr(uintptr_t l)
+{
+    return jit::constInt(m_repo.intPtr, l);
+}
+
 LValue Output::constFloat(double val)
 {
     return jit::constReal(m_repo.floatType, val);
@@ -122,6 +127,11 @@ LValue Output::buildAnd(LValue lhs, LValue rhs)
 LValue Output::buildBr(LBasicBlock bb)
 {
     return jit::buildBr(m_builder, bb);
+}
+
+LValue Output::buildCondBr(LValue condition, LBasicBlock taken, LBasicBlock notTaken)
+{
+    return jit::buildCondBr(m_builder, condition, taken, notTaken);
 }
 
 LValue Output::buildRet(LValue ret)
