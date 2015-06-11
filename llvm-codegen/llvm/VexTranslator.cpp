@@ -9,6 +9,8 @@
 #include "Output.h"
 #include "log.h"
 
+namespace jit {
+
 VexTranslator::VexTranslator()
     : m_code(nullptr)
     , m_codeSize(0)
@@ -24,8 +26,10 @@ bool VexTranslator::init()
     initLLVM();
     return true;
 }
+}
 
 namespace {
+using namespace jit;
 static inline UChar clearWBit(UChar rex)
 {
     return toUChar(rex & ~(1 << 3));
@@ -74,7 +78,7 @@ static uint8_t* emit64(uint8_t* p, uint64_t w64)
 
 typedef jit::CompilerState State;
 
-class VexTranslatorImpl : public VexTranslator {
+class VexTranslatorImpl : public jit::VexTranslator {
 public:
     VexTranslatorImpl();
 
@@ -220,7 +224,6 @@ VexTranslatorImpl::VexTranslatorImpl()
 
 bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env)
 {
-    using namespace jit;
     PlatformDesc desc = {
         env.m_contextSize,
         static_cast<size_t>(bb->offsIP), /* offset of pc */
@@ -307,7 +310,6 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
 jit::LValue VexTranslatorImpl::genGuestArrayOffset(IRRegArray* descr,
     IRExpr* off, Int bias)
 {
-    using namespace jit;
     LValue roff = translateExpr(off);
     LValue tmp = roff;
     Int elemSz = sizeofIRType(descr->elemTy);
@@ -326,7 +328,6 @@ jit::LValue VexTranslatorImpl::genGuestArrayOffset(IRRegArray* descr,
 
 bool VexTranslatorImpl::translatePut(IRStmt* stmt)
 {
-    using namespace jit;
     LValue expr = translateExpr(stmt->Ist.Put.data);
     m_output->buildStoreArgIndex(expr, stmt->Ist.Put.offset / sizeof(intptr_t));
     return true;
@@ -334,7 +335,6 @@ bool VexTranslatorImpl::translatePut(IRStmt* stmt)
 
 bool VexTranslatorImpl::translatePutI(IRStmt* stmt)
 {
-    using namespace jit;
     IRPutI* puti = stmt->Ist.PutI.details;
     LValue offset = genGuestArrayOffset(puti->descr,
         puti->ix, puti->bias);
@@ -365,7 +365,6 @@ bool VexTranslatorImpl::translatePutI(IRStmt* stmt)
 
 bool VexTranslatorImpl::translateWrTmp(IRStmt* stmt)
 {
-    using namespace jit;
     IRTemp tmp = stmt->Ist.WrTmp.tmp;
     LValue val = translateExpr(stmt->Ist.WrTmp.data);
     ensureType(val, typeOfIRExpr(m_bb->tyenv, stmt->Ist.WrTmp.data));
@@ -376,14 +375,13 @@ bool VexTranslatorImpl::translateWrTmp(IRStmt* stmt)
 
 bool VexTranslatorImpl::translateExit(IRStmt* stmt)
 {
-    using namespace jit;
     LValue guard = translateExpr(stmt->Ist.Exit.guard);
-    LBasicBlock bbt = m_output.appendBasicBlock("taken");
-    LBasicBlock bbnt = m_output.appendBasicBlock("not_taken");
-    m_output.buildCondBr(guard, bbt, bbnt);
-    m_output.positionToBBEnd(bbt);
+    LBasicBlock bbt = m_output->appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
+    m_output->buildCondBr(guard, bbt, bbnt);
+    m_output->positionToBBEnd(bbt);
     IRConst* cdst = stmt->Ist.Exit.dst;
-    LValue val = m_output.constIntPtr(static_cast<uint64_t>(cdst->Ico.U64));
+    LValue val = m_output->constIntPtr(static_cast<uint64_t>(cdst->Ico.U64));
 
     if (stmt->Ist.Exit.jk == Ijk_Boring) {
         if (m_chainingAllow) {
@@ -396,7 +394,7 @@ bool VexTranslatorImpl::translateExit(IRStmt* stmt)
         }
         else
             m_output->buildAssistPatch(val);
-        return;
+        goto end;
     }
 
     /* Case: assisted transfer to arbitrary address */
@@ -412,12 +410,15 @@ bool VexTranslatorImpl::translateExit(IRStmt* stmt)
     case Ijk_InvalICache:
     case Ijk_Yield: {
         m_output->buildAssistPatch(val);
-        return;
+        goto end;
     }
     default:
         break;
     }
-    m_output.positionToBBEnd(bbnt);
+    EMASSERT("unsurpported IREXIT" && false);
+end:
+    m_output->positionToBBEnd(bbnt);
+    return true;
 }
 
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)
@@ -455,7 +456,6 @@ void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)
 
 bool VexTranslatorImpl::translateNext()
 {
-    using namespace jit;
     IRExpr* next = m_bb->next;
     IRJumpKind jk = m_bb->jumpkind;
     /* Case: boring transfer to known address */
@@ -576,7 +576,9 @@ jit::LValue VexTranslatorImpl::translateConst(IRExpr* expr)
 }
 }
 
+namespace jit {
 VexTranslator* VexTranslator::create()
 {
     return new VexTranslatorImpl;
+}
 }

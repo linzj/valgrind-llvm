@@ -280,8 +280,8 @@ int main()
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
     checkRun("vex", context, twoWords, guestState);
     // run with llvm
-    VexTranslator::init();
-    VexTranslatorEnv env = {
+    jit::VexTranslator::init();
+    jit::VexTranslatorEnv env = {
         reinterpret_cast<void*>(vex_disp_cp_chain_me_to_fastEP),
         reinterpret_cast<void*>(vex_disp_cp_chain_me_to_slowEP),
         reinterpret_cast<void*>(vex_disp_cp_xindir),
@@ -290,8 +290,9 @@ int main()
         sizeof(guestState)
 
     };
-    std::unique_ptr<VexTranslator> translator(VexTranslator::create());
+    std::unique_ptr<jit::VexTranslator> translator(jit::VexTranslator::create());
     translator->translate(irsb, env);
+    EMASSERT(translator->code() != nullptr && translator->codeSize() != 0);
     memcpy(execMem, translator->code(), translator->codeSize());
     initGuestState(guestState, context);
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));

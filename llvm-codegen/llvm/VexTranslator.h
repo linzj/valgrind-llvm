@@ -2,6 +2,8 @@
 #define VEXTRANSLATOR_H
 #include "VexHeaders.h"
 
+namespace jit {
+
 struct VexTranslatorEnv {
     void* m_dispDirect;
     void* m_dispDirectSlow;
@@ -33,5 +35,5 @@ private:
     const void* m_code;
     size_t m_codeSize;
 };
-
+}
 #endif /* VEXTRANSLATOR_H */
