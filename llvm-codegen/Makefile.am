@@ -18,6 +18,7 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
+	llvm/VexTranslator.cpp \
 	llvm/Link.cpp \
 	llvm/log.cpp \
 	isel_amd64.cpp
@@ -68,4 +69,5 @@ testIR_CXXFLAGS = \
 
 testIR_LDADD = \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(LLVM_LIBS) -lz -lpthread -ldl -lcurses

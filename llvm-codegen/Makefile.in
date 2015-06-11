@@ -150,6 +150,7 @@ am__objects_1 = llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-InitializeLL
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Compile.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.$(OBJEXT) \
+	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.$(OBJEXT) \
 	llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-log.$(OBJEXT) \
 	libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-isel_amd64.$(OBJEXT)
@@ -171,9 +172,11 @@ am_testIR_OBJECTS = test/testIR-IRContext.$(OBJEXT) \
 	test/testIR-IRContextInternal.$(OBJEXT) \
 	test/testIR-dispatch_vex.$(OBJEXT)
 testIR_OBJECTS = $(am_testIR_OBJECTS)
+am__DEPENDENCIES_1 =
 testIR_DEPENDENCIES =  \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(am__DEPENDENCIES_1)
 testIR_LINK = $(CXXLD) $(testIR_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -598,6 +601,7 @@ LLVMCODEGEN_SOURCES_COMMON = \
 	llvm/Output.cpp \
 	llvm/Compile.cpp \
 	llvm/StackMaps.cpp \
+	llvm/VexTranslator.cpp \
 	llvm/Link.cpp \
 	llvm/log.cpp \
 	isel_amd64.cpp
@@ -647,7 +651,8 @@ testIR_CXXFLAGS = \
 
 testIR_LDADD = \
 	$(top_builddir)/VEX/libvex-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
-	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a
+	libllvmcodegen-@VGCONF_ARCH_PRI@-@VGCONF_OS@.a \
+	$(LLVM_LIBS) -lz -lpthread -ldl -lcurses
 
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -739,6 +744,8 @@ llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.$(OBJEXT):  \
 llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Compile.$(OBJEXT):  \
 	llvm/$(am__dirstamp) llvm/$(DEPDIR)/$(am__dirstamp)
 llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.$(OBJEXT):  \
+	llvm/$(am__dirstamp) llvm/$(DEPDIR)/$(am__dirstamp)
+llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.$(OBJEXT):  \
 	llvm/$(am__dirstamp) llvm/$(DEPDIR)/$(am__dirstamp)
 llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.$(OBJEXT):  \
 	llvm/$(am__dirstamp) llvm/$(DEPDIR)/$(am__dirstamp)
@@ -838,6 +845,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-Check.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/testIR-Helpers.Po@am__quote@
@@ -1065,6 +1073,20 @@ llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.obj: llvm/StackMap
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='llvm/StackMaps.cpp' object='llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-StackMaps.obj `if test -f 'llvm/StackMaps.cpp'; then $(CYGPATH_W) 'llvm/StackMaps.cpp'; else $(CYGPATH_W) '$(srcdir)/llvm/StackMaps.cpp'; fi`
+
+llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.o: llvm/VexTranslator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -MT llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.o -MD -MP -MF llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Tpo -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.o `test -f 'llvm/VexTranslator.cpp' || echo '$(srcdir)/'`llvm/VexTranslator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Tpo llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='llvm/VexTranslator.cpp' object='llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.o `test -f 'llvm/VexTranslator.cpp' || echo '$(srcdir)/'`llvm/VexTranslator.cpp
+
+llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.obj: llvm/VexTranslator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -MT llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.obj -MD -MP -MF llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Tpo -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.obj `if test -f 'llvm/VexTranslator.cpp'; then $(CYGPATH_W) 'llvm/VexTranslator.cpp'; else $(CYGPATH_W) '$(srcdir)/llvm/VexTranslator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Tpo llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='llvm/VexTranslator.cpp' object='llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-VexTranslator.obj `if test -f 'llvm/VexTranslator.cpp'; then $(CYGPATH_W) 'llvm/VexTranslator.cpp'; else $(CYGPATH_W) '$(srcdir)/llvm/VexTranslator.cpp'; fi`
 
 llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.o: llvm/Link.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CPPFLAGS) $(CPPFLAGS) $(libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a_CXXFLAGS) $(CXXFLAGS) -MT llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.o -MD -MP -MF llvm/$(DEPDIR)/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.Tpo -c -o llvm/libllvmcodegen_@VGCONF_ARCH_PRI@_@VGCONF_OS@_a-Link.o `test -f 'llvm/Link.cpp' || echo '$(srcdir)/'`llvm/Link.cpp

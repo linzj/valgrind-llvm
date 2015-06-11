@@ -1,8 +1,8 @@
-#include <assert.h>
 #include "StackMaps.h"
 #include "CompilerState.h"
 #include "Abbreviations.h"
 #include "Link.h"
+#include "log.h"
 
 namespace jit {
 
@@ -12,14 +12,14 @@ void link(CompilerState& state, const LinkDesc& desc)
     DataView dv(state.m_stackMapsSection->data());
     sm.parse(&dv);
     auto rm = sm.computeRecordMap();
-    assert(state.m_codeSectionList.size() == 1);
+    EMASSERT(state.m_codeSectionList.size() == 1);
     uint8_t* prologue = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(state.m_codeSectionList.front().data()));
     uint8_t* body = static_cast<uint8_t*>(state.m_entryPoint);
-    desc.m_patchPrologue(desc.m_opaque, prologue, body);
+    desc.m_patchPrologue(desc.m_opaque, prologue);
     for (auto& record : rm) {
-        assert(record.second.size() == 1);
+        EMASSERT(record.second.size() == 1);
         auto found = state.m_patchMap.find(record.first);
-        assert(found != state.m_patchMap.end());
+        EMASSERT(found != state.m_patchMap.end());
         PatchDesc& patchDesc = found->second;
         switch (patchDesc.m_type) {
         case PatchType::Direct: {

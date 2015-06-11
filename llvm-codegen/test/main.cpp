@@ -4,11 +4,13 @@
 #include <string.h>
 #include <string>
 #include <sys/mman.h>
+#include <memory>
 #include "VexHeaders.h"
 #include "IRContextInternal.h"
 #include "RegisterInit.h"
 #include "RegisterAssign.h"
 #include "Check.h"
+#include "VexTranslator.h"
 #include "log.h"
 
 extern "C" {
@@ -239,7 +241,8 @@ static void checkRun(const char* who, const IRContextInternal& context, const ui
 
 static void fillIRSB(IRSB* irsb, const IRContextInternal& context)
 {
-    irsb->next = IRExpr_Get(offsetof(VexGuestState, guest_RIP), Ity_I64);
+    irsb->offsIP = offsetof(VexGuestState, guest_RIP);
+    irsb->next = IRExpr_Get(irsb->offsIP, Ity_I64);
 }
 
 int main()
@@ -271,10 +274,29 @@ int main()
         1, /* debug_paranoia */
         False,
         &clo_vex_control);
-    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
     uintptr_t twoWords[2];
+    // run with vex;
+    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
     initGuestState(guestState, context);
     vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
     checkRun("vex", context, twoWords, guestState);
+    // run with llvm
+    jit::VexTranslator::init();
+    jit::VexTranslatorEnv env = {
+        reinterpret_cast<void*>(vex_disp_cp_chain_me_to_fastEP),
+        reinterpret_cast<void*>(vex_disp_cp_chain_me_to_slowEP),
+        reinterpret_cast<void*>(vex_disp_cp_xindir),
+        reinterpret_cast<void*>(vex_disp_cp_xassisted),
+        0,
+        sizeof(guestState)
+
+    };
+    std::unique_ptr<jit::VexTranslator> translator(jit::VexTranslator::create());
+    translator->translate(irsb, env);
+    EMASSERT(translator->code() != nullptr && translator->codeSize() != 0);
+    memcpy(execMem, translator->code(), translator->codeSize());
+    initGuestState(guestState, context);
+    vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
+    checkRun("llvm", context, twoWords, guestState);
     return 0;
 }
