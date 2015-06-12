@@ -9,6 +9,7 @@ struct IRContext {
 
 void contextSawIRExit(struct IRContext* context, unsigned long long);
 void contextSawRegisterInit(struct IRContext* context, const char* registerName, unsigned long long val);
+void contextSawRegisterInitMemory(struct IRContext* context, const char* registerName, unsigned long long size, unsigned long long val);
 void contextSawCheckRegisterConst(struct IRContext* context, const char* registerName, unsigned long long val);
 void contextSawCheckRegister(struct IRContext* context, const char* registerName1, const char* registerName2);
 void contextSawChecktState(struct IRContext* context, unsigned long long val1, unsigned long long val2);

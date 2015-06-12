@@ -25,7 +25,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 
 %token NEWLINE ERR COMMA
 %token SEPARATOR EQUAL CHECKSTATE CHECKEQ
-%token LEFT_BRACKET RIGHT_BRACKET
+%token LEFT_BRACKET RIGHT_BRACKET MEMORY
 %token PLUS MINUS MULTIPLE DIVIDE
 
 %token IRST_PUT IRST_EXIT
@@ -62,6 +62,10 @@ register_init_statment NEWLINE
 register_init_statment:
     REGISTER_NAME EQUAL numberic_expression {
         contextSawRegisterInit(context, $1, $3);
+        free($1);
+    }
+    | REGISTER_NAME EQUAL MEMORY LEFT_BRACKET numberic_expression COMMA numberic_expression RIGHT_BRACKET {
+        contextSawRegisterInitMemory(context, $1, $5, $7);
         free($1);
     }
 ;

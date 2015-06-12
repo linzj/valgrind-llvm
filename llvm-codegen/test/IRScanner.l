@@ -30,6 +30,7 @@ IREXP_RDTMP RDTMP
 IREXP_CONST CONST
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
+MEMORY Memory
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
 EQUAL =
 LEFT_BRACKET \(
@@ -63,6 +64,7 @@ DIVIDE \/
 {MINUS}             return MINUS;
 {MULTIPLE}          return MULTIPLE;
 {DIVIDE}            return DIVIDE;
+{MEMORY}            return MEMORY;
 {NEWLINE}           return NEWLINE;
 {SPACE}            %{
                    %}

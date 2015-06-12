@@ -288,10 +288,6 @@ bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env)
 bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
 {
     switch (stmt->tag) {
-    case Ist_Store: {
-        EMASSERT("not yet implement" && false);
-        return false;
-    } break;
     case Ist_Put: {
         return translatePut(stmt);
     } break;
@@ -306,6 +302,12 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     }
     case Ist_Store: {
         return translateStore(stmt);
+    }
+    case Ist_StoreG: {
+        return translateStoreG(stmt);
+    }
+    case Ist_LoadG: {
+        return translateLoadG(stmt);
     }
     default:
         EMASSERT("not yet implement" && false);
@@ -434,8 +436,8 @@ bool VexTranslatorImpl::translateStore(IRStmt* stmt)
     EMASSERT(store.end == Iend_LE);
     LValue addr = translateExpr(store.addr);
     LValue data = translateExpr(store.data);
-    EMASSERT(getElementType(addr) == data);
-    m_output.buildStore(data, addr);
+    EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
+    m_output->buildStore(data, addr);
     return true;
 }
 
@@ -445,7 +447,7 @@ bool VexTranslatorImpl::translateStoreG(IRStmt* stmt)
     EMASSERT(details->end == Iend_LE);
     LValue addr = translateExpr(details->addr);
     LValue data = translateExpr(details->data);
-    EMASSERT(getElementType(addr) == data);
+    EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
     LValue guard = translateExpr(details->guard);
     LBasicBlock bbt = m_output->appendBasicBlock("taken");
     LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
@@ -473,25 +475,26 @@ bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
     // do casting
     switch (details->cvt) {
     case ILGop_Ident32:
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int32);
         dataAfterCast = dataAfterCast;
         break;
     case ILGop_16Sto32:
     case ILGop_16Uto32: {
-        EMASSERT(typeOf(dataBeforCast) == m_output.repo().int16);
-        dataAfterCast = m_output.buildCast(details->cvt == ILGop_16Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output.repo().int32);
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int16);
+        dataAfterCast = m_output->buildCast(details->cvt == ILGop_16Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
         break;
     case ILGop_8Uto32:
     case ILGop_8Sto32:
-        EMASSERT(typeOf(dataBeforCast) == m_output.repo().int8);
-        dataAfterCast = m_output.buildCast(details->cvt == ILGop_8Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output.repo().int32);
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int8);
+        dataAfterCast = m_output->buildCast(details->cvt == ILGop_8Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
         break;
     }
     }
     m_output->buildBr(bbnt);
     m_output->positionToBBEnd(bbnt);
-    LValue phi = m_output->buildPhi(m_output.repo().int32);
-    jit::addIncoming(phi, dataAfterCast, &bbt, 1);
-    jit::addIncoming(phi, alt, &original, 1);
+    LValue phi = m_output->buildPhi(m_output->repo().int32);
+    jit::addIncoming(phi, &dataAfterCast, &bbt, 1);
+    jit::addIncoming(phi, &alt, &original, 1);
     m_tmpValMap[details->dst] = phi;
 }
 

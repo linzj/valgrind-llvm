@@ -52,6 +52,7 @@ testIR_SOURCES = \
 	test/main.cpp \
 	test/Helpers.cpp \
 	test/RegisterAssign.cpp \
+	test/RegisterInit.cpp \
 	test/RegisterOperation.cpp \
 	test/Check.cpp \
 	test/IRParser.y \

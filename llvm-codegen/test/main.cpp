@@ -217,8 +217,10 @@ static void initGuestState(VexGuestState& state, const IRContextInternal& contex
     memset(&state, 0, sizeof(state));
     state.host_EvC_COUNTER = 0xffff;
     RegisterAssign assign;
-    for (auto ri : context.m_registerInit) {
-        assign.assign(&state, ri.m_name, ri.m_val);
+    for (auto&& ri : context.m_registerInit) {
+        ri.m_control->reset();
+        uintptr_t val = ri.m_control->init();
+        assign.assign(&state, ri.m_name, val);
     }
 }
 

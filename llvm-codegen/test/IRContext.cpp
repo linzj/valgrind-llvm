@@ -10,10 +10,12 @@
     addStmtToIRSB(CONTEXT()->m_irsb, stmt)
 
 #define PUSH_BACK_REGINIT(name, val) \
-    CONTEXT()->m_registerInit.push_back({ name, val })
+    CONTEXT()                        \
+        ->m_registerInit.push_back({ name, val })
 
 #define PUSH_BACK_CHECK(c) \
-    CONTEXT()->m_checks.push_back(c)
+    CONTEXT()              \
+        ->m_checks.push_back(c)
 
 void contextSawIRExit(struct IRContext* context, unsigned long long addr)
 {
@@ -25,7 +27,13 @@ void contextSawIRExit(struct IRContext* context, unsigned long long addr)
 void contextSawRegisterInit(struct IRContext* context, const char* registerName, unsigned long long val)
 {
     LOGE("%s: val = %llx.\n", __FUNCTION__, val);
-    PUSH_BACK_REGINIT(registerName, val);
+    PUSH_BACK_REGINIT(registerName, RegisterInitControl::createConstantInit(val));
+}
+
+void contextSawRegisterInitMemory(struct IRContext* context, const char* registerName, unsigned long long size, unsigned long long val)
+{
+    LOGE("%s: size = %llx, val = %llx.\n", __FUNCTION__, size, val);
+    PUSH_BACK_REGINIT(registerName, RegisterInitControl::createMemoryInit(size, val));
 }
 
 void contextSawCheckRegisterConst(struct IRContext* context, const char* registerName, unsigned long long val)
