@@ -62,6 +62,7 @@ public:
     }
 
     LValue buildCast(LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy);
+    LValue buildPhi(LType type);
 
     void buildDirectPatch(uintptr_t where);
     void buildDirectPatch(LValue where);
@@ -73,6 +74,7 @@ public:
     inline IntrinsicRepository& repo() { return m_repo; }
     inline LType argType() const { return m_argType; }
     inline LBasicBlock prologue() const { return m_prologue; }
+    inline LBasicBlock current() const { return m_current; }
     inline LValue arg() const { return m_arg; }
     LType typeOf(LValue val) __attribute__((pure));
 
@@ -85,6 +87,7 @@ private:
     LBuilder m_builder;
     LType m_argType;
     LBasicBlock m_prologue;
+    LBasicBlock m_current;
     LValue m_arg;
     uint32_t m_stackMapsId;
 };

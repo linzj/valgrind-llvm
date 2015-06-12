@@ -93,6 +93,9 @@ private:
     bool translatePutI(IRStmt* stmt);
     bool translateWrTmp(IRStmt* stmt);
     bool translateExit(IRStmt* stmt);
+    bool translateStore(IRStmt* stmt);
+    bool translateStoreG(IRStmt* stmt);
+    bool translateLoadG(IRStmt* stmt);
 
     jit::LValue translateExpr(IRExpr* expr);
     jit::LValue translateRdTmp(IRExpr* expr);
@@ -301,6 +304,9 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     case Ist_Exit: {
         return translateExit(stmt);
     }
+    case Ist_Store: {
+        return translateStore(stmt);
+    }
     default:
         EMASSERT("not yet implement" && false);
         return false;
@@ -420,6 +426,73 @@ bool VexTranslatorImpl::translateExit(IRStmt* stmt)
 end:
     m_output->positionToBBEnd(bbnt);
     return true;
+}
+
+bool VexTranslatorImpl::translateStore(IRStmt* stmt)
+{
+    auto&& store = stmt->Ist.Store;
+    EMASSERT(store.end == Iend_LE);
+    LValue addr = translateExpr(store.addr);
+    LValue data = translateExpr(store.data);
+    EMASSERT(getElementType(addr) == data);
+    m_output.buildStore(data, addr);
+    return true;
+}
+
+bool VexTranslatorImpl::translateStoreG(IRStmt* stmt)
+{
+    IRStoreG* details = stmt->Ist.StoreG.details;
+    EMASSERT(details->end == Iend_LE);
+    LValue addr = translateExpr(details->addr);
+    LValue data = translateExpr(details->data);
+    EMASSERT(getElementType(addr) == data);
+    LValue guard = translateExpr(details->guard);
+    LBasicBlock bbt = m_output->appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
+    m_output->buildCondBr(guard, bbt, bbnt);
+    m_output->positionToBBEnd(bbt);
+    m_output->buildStore(data, addr);
+    m_output->buildBr(bbnt);
+    m_output->positionToBBEnd(bbnt);
+}
+
+bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
+{
+    IRLoadG* details = stmt->Ist.LoadG.details;
+    EMASSERT(details->end == Iend_LE);
+    LValue addr = translateExpr(details->addr);
+    LValue alt = translateExpr(details->alt);
+    LValue guard = translateExpr(details->guard);
+    LBasicBlock bbt = m_output->appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
+    m_output->buildCondBr(guard, bbt, bbnt);
+    LBasicBlock original = m_output->current();
+    m_output->positionToBBEnd(bbt);
+    LValue dataBeforCast = m_output->buildLoad(addr);
+    LValue dataAfterCast;
+    // do casting
+    switch (details->cvt) {
+    case ILGop_Ident32:
+        dataAfterCast = dataAfterCast;
+        break;
+    case ILGop_16Sto32:
+    case ILGop_16Uto32: {
+        EMASSERT(typeOf(dataBeforCast) == m_output.repo().int16);
+        dataAfterCast = m_output.buildCast(details->cvt == ILGop_16Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output.repo().int32);
+        break;
+    case ILGop_8Uto32:
+    case ILGop_8Sto32:
+        EMASSERT(typeOf(dataBeforCast) == m_output.repo().int8);
+        dataAfterCast = m_output.buildCast(details->cvt == ILGop_8Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output.repo().int32);
+        break;
+    }
+    }
+    m_output->buildBr(bbnt);
+    m_output->positionToBBEnd(bbnt);
+    LValue phi = m_output->buildPhi(m_output.repo().int32);
+    jit::addIncoming(phi, dataAfterCast, &bbt, 1);
+    jit::addIncoming(phi, alt, &original, 1);
+    m_tmpValMap[details->dst] = phi;
 }
 
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)

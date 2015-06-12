@@ -97,6 +97,8 @@ static inline LType typeOf(LValue value) { return llvmAPI->TypeOf(value); }
 
 static inline LType getElementType(LType value) { return llvmAPI->GetElementType(value); }
 
+static inline LValue sizeOf(LType type) { return llvmAPI->sizeOf(type); }
+
 static inline unsigned mdKindID(LContext context, const char* string) { return llvmAPI->GetMDKindIDInContext(context, string, std::strlen(string)); }
 static inline LValue mdString(LContext context, const char* string, unsigned length) { return llvmAPI->MDStringInContext(context, string, length); }
 static inline LValue mdString(LContext context, const char* string) { return mdString(context, string, std::strlen(string)); }
