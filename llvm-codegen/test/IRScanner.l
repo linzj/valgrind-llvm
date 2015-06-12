@@ -28,6 +28,7 @@ IRST_EXIT EXIT
 IRST_PUT PUT
 IREXP_RDTMP RDTMP
 IREXP_CONST CONST
+IREXP_LOAD LOAD
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
 MEMORY Memory
@@ -50,6 +51,7 @@ DIVIDE \/
 {IRST_PUT}           return IRST_PUT;
 {IREXP_CONST}           return IREXP_CONST;
 {IREXP_RDTMP}           return IREXP_RDTMP;
+{IREXP_LOAD}      return IREXP_LOAD;
 {COMMA}           return COMMA;
 {CHECKEQ}           return CHECKEQ;
 {CHECKSTATE}        return CHECKSTATE;

@@ -29,7 +29,7 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 %token PLUS MINUS MULTIPLE DIVIDE
 
 %token IRST_PUT IRST_EXIT
-%token IREXP_CONST IREXP_RDTMP
+%token IREXP_CONST IREXP_RDTMP IREXP_LOAD
 
 %token <num> INTNUM
 %token <text> REGISTER_NAME IDENTIFIER
@@ -104,6 +104,12 @@ expression
     | IREXP_RDTMP LEFT_BRACKET IDENTIFIER RIGHT_BRACKET {
         $$ = contextNewRdTmpExpr(context, $3);
         free($3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_LOAD LEFT_BRACKET expression RIGHT_BRACKET {
+        $$ = contextNewLoadExpr(context, $3);
         if ($$ == NULL) {
             YYABORT;
         }

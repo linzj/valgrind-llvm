@@ -101,10 +101,12 @@ private:
     jit::LValue translateRdTmp(IRExpr* expr);
     jit::LValue translateConst(IRExpr* expr);
     jit::LValue translateGet(IRExpr* expr);
+    jit::LValue translateLoad(IRExpr* expr);
     inline void _ensureType(jit::LValue val, IRType type) __attribute__((pure));
 #define ensureType(val, type) \
     _ensureType(val, type)
 
+    LValue castToPointer(IRType type, LValue p);
     static void patchProloge(void*, uint8_t* start);
     static void patchDirect(void*, uint8_t* p, void*);
     static void patchIndirect(void*, uint8_t* p, void*);
@@ -609,6 +611,9 @@ jit::LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
     case Iex_Get: {
         return translateGet(expr);
     }
+    case Iex_Load: {
+        return translateLoad(expr);
+    }
     }
     EMASSERT("not supported expr" && false);
 }
@@ -660,6 +665,37 @@ jit::LValue VexTranslatorImpl::translateGet(IRExpr* expr)
     EMASSERT(expr->Iex.Get.ty == Ity_I64);
     LValue beforeCast = m_output->buildLoadArgIndex(expr->Iex.Get.offset / sizeof(intptr_t));
     return beforeCast;
+}
+
+jit::LValue VexTranslatorImpl::translateLoad(IRExpr* expr)
+{
+    auto&& load = expr->Iex.Load;
+    LValue addr = translateExpr(load.addr);
+    LValue pointer = castToPointer(load.ty, addr);
+    return pointer;
+}
+
+LValue VexTranslatorImpl::castToPointer(IRType irtype, LValue p)
+{
+    LValue type;
+    switch (irtype) {
+    case Ity_I8:
+        type = m_output->repo().ref8();
+        break;
+    case Ity_I16:
+        type = m_output->repo().ref16();
+        break;
+    case Ity_I32:
+        type = m_output->repo().ref32();
+        break;
+    case Ity_I64:
+        type = m_output->repo().ref64();
+        break;
+    default:
+        EMASSERT("unsupported type.");
+        EMUNREACHABLE();
+    }
+    return m_output->buildCast(LLVMBitCast, p, type);
 }
 }
 

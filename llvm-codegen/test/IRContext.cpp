@@ -97,6 +97,12 @@ void* contextNewRdTmpExpr(struct IRContext* context, const char* id)
     return IRExpr_RdTmp(found->second);
 }
 
+void* contextNewLoadExpr(struct IRContext* context, void* expr)
+{
+    LOGE("%s:.\n", __FUNCTION__);
+    return IRExpr_Load(Iend_LE, Ity_I64, expr);
+}
+
 void contextYYError(int line, int column, struct IRContext* context, const char* reason)
 {
     printf("line %d column %d: error:%s.\n", line, column, reason);

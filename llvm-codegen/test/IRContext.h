@@ -17,6 +17,7 @@ void contextSawIRWr(struct IRContext* context, const char* id, void* expr);
 void contextSawIRPutExpr(struct IRContext* context, unsigned long long where, void* expr);
 void* contextNewConstExpr(struct IRContext* context, unsigned long long val);
 void* contextNewRdTmpExpr(struct IRContext* context, const char* id);
+void* contextNewLoadExpr(struct IRContext* context, void* expr);
 void contextYYError(int line, int column, struct IRContext* context, const char* reason);
 #ifdef __cplusplus
 }
