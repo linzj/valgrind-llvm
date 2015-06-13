@@ -19,6 +19,25 @@
     CONTEXT()              \
         ->m_checks.push_back(c)
 
+static IRType contextType2IRType(enum ContextIRType type)
+{
+    switch (type) {
+    case CONTEXTIR_I1:
+        return Ity_I1;
+    case CONTEXTIR_I8:
+        return Ity_I8;
+    case CONTEXTIR_I16:
+        return Ity_I16;
+    case CONTEXTIR_I32:
+        return Ity_I32;
+    case CONTEXTIR_DEFAULT:
+    case CONTEXTIR_I64:
+        return Ity_I64;
+    default:
+        EMASSERT("unsupported type" && false);
+    }
+}
+
 void contextSawIRExit(struct IRContext* context, unsigned long long addr)
 {
     IRStmt* stmt = IRStmt_Exit(IRExpr_Const(IRConst_U1(1)), Ijk_Boring, IRConst_U64(static_cast<uint64_t>(addr)), offsetof(VexGuestState, guest_RIP));
@@ -86,7 +105,8 @@ void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
         tmp = found->second;
     }
     else {
-        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I64);
+        IRTypeEnv* env = CONTEXT()->m_irsb->tyenv;
+        tmp = newIRTemp(env, typeOfIRExpr(env, static_cast<IRExpr*>(expr)));
         tmpMap[id] = tmp;
     }
     IRStmt* stmt = IRStmt_WrTmp(tmp, static_cast<IRExpr*>(expr));
@@ -117,7 +137,8 @@ void contextSawIRLoadG(struct IRContext* context, const char* id, void* conditio
         tmp = found->second;
     }
     else {
-        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I64);
+        IRTypeEnv* env = CONTEXT()->m_irsb->tyenv;
+        tmp = newIRTemp(env, Ity_I32);
         tmpMap[id] = tmp;
     }
     IRStmt* stmt = IRStmt_LoadG(Iend_LE, ILGop_Ident32, tmp, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(defaultVal), static_cast<IRExpr*>(conditionExpr));
@@ -131,10 +152,31 @@ void contextSawIRStoreG(struct IRContext* context, void* conditionExpr, void* va
     PUSH_BACK_STMT(stmt);
 }
 
-void* contextNewConstExpr(struct IRContext* context, unsigned long long val)
+void* contextNewConstExpr(struct IRContext* context, unsigned long long val, enum ContextIRType type)
 {
-    LOGE("%s: val = %llu.\n", __FUNCTION__, val);
-    IRExpr* expr = IRExpr_Const(IRConst_U64(val));
+    LOGE("%s: val = %llu, type = %d.\n", __FUNCTION__, val, type);
+    IRConst* myconst;
+    switch (type) {
+    case CONTEXTIR_I1:
+        myconst = IRConst_U1(val);
+        break;
+    case CONTEXTIR_I8:
+        myconst = IRConst_U8(val);
+        break;
+    case CONTEXTIR_I16:
+        myconst = IRConst_U16(val);
+        break;
+    case CONTEXTIR_I32:
+        myconst = IRConst_U32(val);
+        break;
+    case CONTEXTIR_DEFAULT:
+    case CONTEXTIR_I64:
+        myconst = IRConst_U64(val);
+        break;
+    default:
+        EMASSERT("should not reach here." && false);
+    }
+    IRExpr* expr = IRExpr_Const(myconst);
     return expr;
 }
 
@@ -150,13 +192,13 @@ void* contextNewRdTmpExpr(struct IRContext* context, const char* id)
     return IRExpr_RdTmp(found->second);
 }
 
-void* contextNewLoadExpr(struct IRContext* context, void* expr)
+void* contextNewLoadExpr(struct IRContext* context, void* expr, enum ContextIRType type)
 {
     LOGE("%s:.\n", __FUNCTION__);
-    return IRExpr_Load(Iend_LE, Ity_I64, static_cast<IRExpr*>(expr));
+    return IRExpr_Load(Iend_LE, contextType2IRType(type), static_cast<IRExpr*>(expr));
 }
 
-void* contextNewGetExpr(struct IRContext* context, const char* regName)
+void* contextNewGetExpr(struct IRContext* context, const char* regName, enum ContextIRType type)
 {
     LOGE("%s: regName = %s.\n", __FUNCTION__, regName);
     RegisterOperation& op = RegisterOperation::getDefault();

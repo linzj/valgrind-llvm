@@ -25,7 +25,9 @@ public:
     LValue buildStore(LValue val, LValue pointer);
     LValue buildAdd(LValue lhs, LValue rhs);
     LValue buildAnd(LValue lhs, LValue rhs);
+    LValue buildOr(LValue left, LValue right);
     LValue buildShl(LValue lhs, LValue rhs);
+    LValue buildLShr(LValue lhs, LValue rhs);
     LValue buildBr(LBasicBlock bb);
     LValue buildCondBr(LValue condition, LBasicBlock taken, LBasicBlock notTaken);
     LValue buildRet(LValue ret);

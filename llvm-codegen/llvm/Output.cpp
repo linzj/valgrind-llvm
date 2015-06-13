@@ -19,6 +19,7 @@ Output::Output(CompilerState& state)
     positionToBBEnd(m_prologue);
     buildGetArg();
 }
+
 Output::~Output()
 {
     llvmAPI->DisposeBuilder(m_builder);
@@ -116,9 +117,19 @@ LValue Output::buildAdd(LValue lhs, LValue rhs)
     return jit::buildAdd(m_builder, lhs, rhs);
 }
 
+LValue Output::buildOr(LValue left, LValue right)
+{
+    return llvmAPI->BuildOr(m_builder, left, right, "");
+}
+
 LValue Output::buildShl(LValue lhs, LValue rhs)
 {
     return llvmAPI->BuildShl(m_builder, lhs, rhs, "");
+}
+
+LValue Output::buildLShr(LValue lhs, LValue rhs)
+{
+    return llvmAPI->BuildLShr(m_builder, lhs, rhs, "");
 }
 
 LValue Output::buildAnd(LValue lhs, LValue rhs)
@@ -241,7 +252,8 @@ LValue Output::buildICmp(LIntPredicate cond, LValue left, LValue right)
 LValue Output::buildAtomicCmpXchg(LValue addr, LValue cmp, LValue val)
 {
     llvm::IRBuilder<>* builder = llvm::unwrap(m_builder);
-    return llvm::wrap(builder->CreateAtomicCmpXchg(llvm::unwrap(addr), llvm::unwrap(cmp), llvm::unwrap(val), llvm::SequentiallyConsistent, llvm::SequentiallyConsistent));
+    LValue pair = llvm::wrap(builder->CreateAtomicCmpXchg(llvm::unwrap(addr), llvm::unwrap(cmp), llvm::unwrap(val), llvm::SequentiallyConsistent, llvm::SequentiallyConsistent));
+    return llvmAPI->BuildExtractValue(m_builder, pair, 0, "");
 }
 
 LType Output::typeOf(LValue val)

@@ -14,6 +14,7 @@
     unsigned long long num;
     char* text;
     void* any;
+    enum ContextIRType type;
 }
 
 %{
@@ -37,11 +38,15 @@ void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 %token IREXP_CONST IREXP_RDTMP IREXP_LOAD
 %token IREXP_GET
 
+
+%token IRTY_I64 IRTY_I32 IRTY_I16 IRTY_I8 IRTY_I1
+
 %token <num> INTNUM
 %token <text> REGISTER_NAME IDENTIFIER
 
 %type <any> expression readtmp_expression
 %type <num> numberic_expression
+%type <type> type_modifier
 
 %left PLUS MINUS
 %left MULTIPLE DIVIDE
@@ -116,20 +121,39 @@ statement
 
 expression
     : IREXP_CONST LEFT_BRACKET numberic_expression RIGHT_BRACKET {
-        $$ = contextNewConstExpr(context, $3);
+        $$ = contextNewConstExpr(context, $3, CONTEXTIR_DEFAULT);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_CONST LEFT_BRACKET numberic_expression COMMA type_modifier RIGHT_BRACKET {
+        $$ = contextNewConstExpr(context, $3, $5);
         if ($$ == NULL) {
             YYABORT;
         }
     }
     | readtmp_expression
     | IREXP_LOAD LEFT_BRACKET expression RIGHT_BRACKET {
-        $$ = contextNewLoadExpr(context, $3);
+        $$ = contextNewLoadExpr(context, $3, CONTEXTIR_DEFAULT);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_LOAD LEFT_BRACKET expression COMMA type_modifier RIGHT_BRACKET {
+        $$ = contextNewLoadExpr(context, $3, $5);
         if ($$ == NULL) {
             YYABORT;
         }
     }
     | IREXP_GET LEFT_BRACKET REGISTER_NAME RIGHT_BRACKET {
-        $$ = contextNewGetExpr(context, $3);
+        $$ = contextNewGetExpr(context, $3, CONTEXTIR_DEFAULT);
+        free($3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_GET LEFT_BRACKET REGISTER_NAME COMMA type_modifier RIGHT_BRACKET {
+        $$ = contextNewGetExpr(context, $3, $5);
         free($3);
         if ($$ == NULL) {
             YYABORT;
@@ -153,6 +177,24 @@ readtmp_expression
         }
     }
 ;
+
+type_modifier
+    : IRTY_I1 {
+        $$ = CONTEXTIR_I1;
+    }
+    | IRTY_I8 {
+        $$ = CONTEXTIR_I8;
+    }
+    | IRTY_I16 {
+        $$ = CONTEXTIR_I16;
+    }
+    | IRTY_I32 {
+        $$ = CONTEXTIR_I32;
+    }
+    | IRTY_I64 {
+        $$ = CONTEXTIR_I64;
+    }
+    ;
 
 
 numberic_expression

@@ -96,6 +96,7 @@ private:
     bool translateStore(IRStmt* stmt);
     bool translateStoreG(IRStmt* stmt);
     bool translateLoadG(IRStmt* stmt);
+    bool translateCAS(IRStmt* stmt);
 
     jit::LValue translateExpr(IRExpr* expr);
     jit::LValue translateRdTmp(IRExpr* expr);
@@ -107,6 +108,9 @@ private:
     _ensureType(val, type)
 
     LValue castToPointer(IRType type, LValue p);
+    LValue two32to64(LValue low, LValue hi);
+    void _64totwo32(LValue val64, LValue& low, LValue& hi);
+
     static void patchProloge(void*, uint8_t* start);
     static void patchDirect(void*, uint8_t* p, void*);
     static void patchIndirect(void*, uint8_t* p, void*);
@@ -310,6 +314,9 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     }
     case Ist_LoadG: {
         return translateLoadG(stmt);
+    }
+    case Ist_CAS: {
+        return translateCAS(stmt);
     }
     default:
         EMASSERT("not yet implement" && false);
@@ -515,6 +522,45 @@ bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
     return true;
 }
 
+bool VexTranslatorImpl::translateCAS(IRStmt* stmt)
+{
+    IRCAS* cas = stmt->Ist.CAS.details;
+    LValue addr = translateExpr(cas->addr);
+    LValue expectedData, newData;
+    if (!cas->expdHi) {
+        // non 64 bit
+        EMASSERT(cas->dataHi == nullptr);
+        addr = m_output->buildCast(LLVMBitCast, addr, m_output->repo().ref32);
+        expectedData = translateExpr(cas->expdLo);
+        newData = translateExpr(cas->dataLo);
+    }
+    else {
+        EMASSERT(cas->dataHi != nullptr);
+        addr = m_output->buildCast(LLVMBitCast, addr, m_output->repo().ref64);
+        expectedData = translateExpr(cas->expdLo);
+        LValue expectedDataHi = translateExpr(cas->expdHi);
+        expectedData = two32to64(expectedData, expectedDataHi);
+
+        newData = translateExpr(cas->dataLo);
+        LValue newDataHi = translateExpr(cas->dataHi);
+        newData = two32to64(newData, newDataHi);
+    }
+    LValue v = m_output->buildAtomicCmpXchg(addr, expectedData, newData);
+    if (!cas->expdHi) {
+        // non 64 bit
+        EMASSERT(cas->oldHi == IRTemp_INVALID);
+        m_tmpValMap[cas->oldLo] = v;
+    }
+    else {
+        EMASSERT(cas->oldHi == IRTemp_INVALID);
+        LValue hi, lo;
+        _64totwo32(v, lo, hi);
+        m_tmpValMap[cas->oldLo] = lo;
+        m_tmpValMap[cas->oldHi] = hi;
+    }
+    return true;
+}
+
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)
 {
     switch (type) {
@@ -711,6 +757,20 @@ LValue VexTranslatorImpl::castToPointer(IRType irtype, LValue p)
         EMUNREACHABLE();
     }
     return m_output->buildCast(LLVMBitCast, p, type);
+}
+
+LValue VexTranslatorImpl::two32to64(LValue low, LValue hi)
+{
+    LValue low64 = m_output->buildCast(LLVMZExt, low, m_output->repo().int64);
+    LValue hi64 = m_output->buildCast(LLVMZExt, hi, m_output->repo().int64);
+    LValue hiShifted = m_output->buildShl(hi64, m_output->constInt32(32));
+    return m_output->buildAnd(hiShifted, low64);
+}
+
+void VexTranslatorImpl::_64totwo32(LValue val64, LValue& low, LValue& hi)
+{
+    low = m_output->buildCast(LLVMTrunc, val64, m_output->repo().int32);
+    hi = m_output->buildCast(LLVMTrunc, m_output->buildLShr(val64, m_output->constInt32(32)), m_output->repo().int32);
 }
 }
 

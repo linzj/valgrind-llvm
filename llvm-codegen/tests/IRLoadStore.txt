@@ -1,9 +1,9 @@
-rax = Memory(8, 0x1000)
-rbx = Memory(8, 0)
+rax = Memory(4, 0x1000)
+rbx = Memory(4, 0)
 rcx = 0x2000
 %%
 a0 = GET(rax)
-a1 = LOAD(a0)
+a1 = LOAD(a0, i32)
 a2 = GET(rbx)
 STORE(a1, a2)
 %%
