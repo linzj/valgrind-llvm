@@ -62,6 +62,7 @@ public:
     }
 
     LValue buildCast(LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy);
+    LValue buildPointerCast(LLVMValueRef Val, LLVMTypeRef DestTy);
     LValue buildPhi(LType type);
 
     void buildDirectPatch(uintptr_t where);

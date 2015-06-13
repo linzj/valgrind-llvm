@@ -3,7 +3,9 @@
 #include "Helpers.h"
 #include "VexHeaders.h"
 #include "Check.h"
+#include "RegisterOperation.h"
 #include <stdio.h>
+#include <string.h>
 #define CONTEXT() \
     static_cast<struct IRContextInternal*>(context)
 #define PUSH_BACK_STMT(stmt) \
@@ -30,6 +32,20 @@ void contextSawRegisterInit(struct IRContext* context, const char* registerName,
     PUSH_BACK_REGINIT(registerName, RegisterInitControl::createConstantInit(val));
 }
 
+void contextSawInitOption(struct IRContext* context, const char* opt)
+{
+    LOGE("%s: opt = %s.\n", __FUNCTION__, opt);
+
+    if (strcmp(opt, "novex") == 0) {
+        CONTEXT()
+            ->m_novex
+            = true;
+    }
+    else {
+        LOGE("%s:unknow option.\n", __FUNCTION__);
+    }
+}
+
 void contextSawRegisterInitMemory(struct IRContext* context, const char* registerName, unsigned long long size, unsigned long long val)
 {
     LOGE("%s: size = %llx, val = %llx.\n", __FUNCTION__, size, val);
@@ -48,10 +64,16 @@ void contextSawCheckRegister(struct IRContext* context, const char* registerName
     PUSH_BACK_CHECK(Check::createCheckRegisterEq(registerName1, registerName2));
 }
 
-void contextSawChecktState(struct IRContext* context, unsigned long long val1, unsigned long long val2)
+void contextSawCheckState(struct IRContext* context, unsigned long long val)
 {
-    LOGE("%s: val1 = %llx, val2 = %llx.\n", __FUNCTION__, val1, val2);
-    PUSH_BACK_CHECK(Check::createCheckState(val1, val2));
+    LOGE("%s: val = %llx.\n", __FUNCTION__, val);
+    PUSH_BACK_CHECK(Check::createCheckState(val));
+}
+
+void contextSawCheckMemory(struct IRContext* context, const char* registerName, unsigned long long val)
+{
+    LOGE("%s: registerName = %s, val = %llx.\n", __FUNCTION__, registerName, val);
+    PUSH_BACK_CHECK(Check::createCheckMemory(registerName, val));
 }
 
 void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
@@ -71,10 +93,37 @@ void contextSawIRWr(struct IRContext* context, const char* id, void* expr)
     PUSH_BACK_STMT(stmt);
 }
 
-void contextSawIRPutExpr(struct IRContext* context, unsigned long long where, void* expr)
+void contextSawIRPut(struct IRContext* context, unsigned long long where, void* expr)
 {
     LOGE("%s: where = %llu, expr = %p.\n", __FUNCTION__, where, expr);
     IRStmt* stmt = IRStmt_Put(where, static_cast<IRExpr*>(expr));
+    PUSH_BACK_STMT(stmt);
+}
+
+void contextSawIRStore(struct IRContext* context, void* valExpr, void* addrExpr)
+{
+    LOGE("%s:.\n", __FUNCTION__);
+    IRStmt* stmt = IRStmt_Store(Iend_LE, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(valExpr));
+    PUSH_BACK_STMT(stmt);
+}
+
+int contextSawIRLoadG(struct IRContext* context, const char* tmp, void* conditionExpr, void* addrExpr, void* defaultVal)
+{
+    LOGE("%s:.\n", __FUNCTION__);
+    auto&& tmpMap = CONTEXT()->getTempMap();
+    auto found = tmpMap.find(tmp);
+    if (found == tmpMap.end()) {
+        LOGE("%s: can't find tmp %s.\n", __FUNCTION__, tmp);
+        return false;
+    }
+    IRStmt* stmt = IRStmt_LoadG(Iend_LE, ILGop_Ident32, found->second, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(defaultVal), static_cast<IRExpr*>(conditionExpr));
+    PUSH_BACK_STMT(stmt);
+}
+
+void contextSawIRStoreG(struct IRContext* context, void* conditionExpr, void* valExpr, void* addrExpr)
+{
+    LOGE("%s:.\n", __FUNCTION__);
+    IRStmt* stmt = IRStmt_StoreG(Iend_LE, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(valExpr), static_cast<IRExpr*>(conditionExpr));
     PUSH_BACK_STMT(stmt);
 }
 
@@ -100,10 +149,18 @@ void* contextNewRdTmpExpr(struct IRContext* context, const char* id)
 void* contextNewLoadExpr(struct IRContext* context, void* expr)
 {
     LOGE("%s:.\n", __FUNCTION__);
-    return IRExpr_Load(Iend_LE, Ity_I64, expr);
+    return IRExpr_Load(Iend_LE, Ity_I64, static_cast<IRExpr*>(expr));
 }
 
-void contextYYError(int line, int column, struct IRContext* context, const char* reason)
+void* contextNewGetExpr(struct IRContext* context, const char* regName)
 {
-    printf("line %d column %d: error:%s.\n", line, column, reason);
+    LOGE("%s: regName = %s.\n", __FUNCTION__, regName);
+    RegisterOperation& op = RegisterOperation::getDefault();
+    size_t offset = op.getRegisterPointerOffset(regName);
+    return IRExpr_Get(offset, Ity_I64);
+}
+
+void contextYYError(int line, int column, struct IRContext* context, const char* reason, const char* text)
+{
+    printf("line %d column %d: error:%s; text: %s.\n", line, column, reason, text);
 }

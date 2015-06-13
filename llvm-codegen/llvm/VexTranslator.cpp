@@ -438,8 +438,9 @@ bool VexTranslatorImpl::translateStore(IRStmt* stmt)
     EMASSERT(store.end == Iend_LE);
     LValue addr = translateExpr(store.addr);
     LValue data = translateExpr(store.data);
-    EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
-    m_output->buildStore(data, addr);
+    // EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
+    LValue castAddr = m_output->buildCast(LLVMBitCast, addr, jit::pointerType(jit::typeOf(data)));
+    m_output->buildStore(data, castAddr);
     return true;
 }
 
@@ -472,7 +473,7 @@ bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
     m_output->buildCondBr(guard, bbt, bbnt);
     LBasicBlock original = m_output->current();
     m_output->positionToBBEnd(bbt);
-    LValue dataBeforCast = m_output->buildLoad(addr);
+    LValue dataBeforCast = m_output->buildLoad(m_output->buildPointerCast(addr, m_output->repo().ref32));
     LValue dataAfterCast;
     // do casting
     switch (details->cvt) {
@@ -672,24 +673,24 @@ jit::LValue VexTranslatorImpl::translateLoad(IRExpr* expr)
     auto&& load = expr->Iex.Load;
     LValue addr = translateExpr(load.addr);
     LValue pointer = castToPointer(load.ty, addr);
-    return pointer;
+    return m_output->buildLoad(pointer);
 }
 
 LValue VexTranslatorImpl::castToPointer(IRType irtype, LValue p)
 {
-    LValue type;
+    LType type;
     switch (irtype) {
     case Ity_I8:
-        type = m_output->repo().ref8();
+        type = m_output->repo().ref8;
         break;
     case Ity_I16:
-        type = m_output->repo().ref16();
+        type = m_output->repo().ref16;
         break;
     case Ity_I32:
-        type = m_output->repo().ref32();
+        type = m_output->repo().ref32;
         break;
     case Ity_I64:
-        type = m_output->repo().ref64();
+        type = m_output->repo().ref64;
         break;
     default:
         EMASSERT("unsupported type.");

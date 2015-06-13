@@ -26,11 +26,16 @@ ident           -?{nmstart}{nmchar}*
 
 IRST_EXIT EXIT
 IRST_PUT PUT
+IRST_STORE STORE
+IRST_STOREG STOREG
+IRST_LOADG  LOADG
 IREXP_RDTMP RDTMP
 IREXP_CONST CONST
 IREXP_LOAD LOAD
+IREXP_GET GET
 CHECKEQ CheckEqual
 CHECKSTATE CheckState
+CHECKMEMORY CheckMemory
 MEMORY Memory
 REGISTER_NAME rax|rbx|rcx|rdx|rsi|rdi|rsp|rbp|r8|r9|r10|r11|r12|r13|r14|r15|rip
 EQUAL =
@@ -49,12 +54,17 @@ DIVIDE \/
 %%
 {IRST_EXIT}           return IRST_EXIT;
 {IRST_PUT}           return IRST_PUT;
+{IRST_STORE}           return IRST_STORE;
+{IRST_LOADG}           return IRST_LOADG;
+{IRST_STOREG}           return IRST_STOREG;
 {IREXP_CONST}           return IREXP_CONST;
 {IREXP_RDTMP}           return IREXP_RDTMP;
 {IREXP_LOAD}      return IREXP_LOAD;
+{IREXP_GET}      return IREXP_GET;
 {COMMA}           return COMMA;
 {CHECKEQ}           return CHECKEQ;
 {CHECKSTATE}        return CHECKSTATE;
+{CHECKMEMORY}        return CHECKMEMORY;
 {REGISTER_NAME}     %{
                         yylval->text = strdup(yytext);
                         return REGISTER_NAME;
@@ -71,13 +81,13 @@ DIVIDE \/
 {SPACE}            %{
                    %}
 {SEPARATOR}         return SEPARATOR;
-{INTNUM}            %{
-                        yylval->num = strtoull(yytext, NULL, 0);
-                        return INTNUM;
-                    %}
 {IDENTIFIER}        %{
                         yylval->text = strdup(yytext);
                         return IDENTIFIER;
+                    %}
+{INTNUM}            %{
+                        yylval->num = strtoull(yytext, NULL, 0);
+                        return INTNUM;
                     %}
 .                   %{
                         fprintf(stderr, "error string is %s.\n", yytext);

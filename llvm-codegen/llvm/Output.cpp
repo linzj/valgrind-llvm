@@ -150,6 +150,11 @@ LValue Output::buildCast(LLVMOpcode Op, LLVMValueRef Val, LLVMTypeRef DestTy)
     return llvmAPI->BuildCast(m_builder, Op, Val, DestTy, "");
 }
 
+LValue Output::buildPointerCast(LLVMValueRef Val, LLVMTypeRef DestTy)
+{
+    return llvmAPI->BuildPointerCast(m_builder, Val, DestTy, "");
+}
+
 LValue Output::buildPhi(LType type) { return llvmAPI->BuildPhi(m_builder, type, ""); }
 
 void Output::buildGetArg()

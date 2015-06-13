@@ -18,6 +18,8 @@ struct IRContextInternal : IRContext {
     CheckVector m_checks;
     TempMapPtr m_tempMap;
     IRSB* m_irsb;
+    bool m_novex;
+
     IRContextInternal();
     inline TmpMap& getTempMap()
     {

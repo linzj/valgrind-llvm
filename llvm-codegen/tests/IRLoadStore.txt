@@ -1,0 +1,11 @@
+rax = Memory(8, 0x1000)
+rbx = Memory(8, 0)
+rcx = 0x2000
+%%
+a0 = GET(rax)
+a1 = LOAD(a0)
+a2 = GET(rbx)
+STORE(a1, a2)
+%%
+CheckMemory rax 0x1000
+CheckMemory rbx 0x1000

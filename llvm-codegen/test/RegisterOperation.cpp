@@ -45,3 +45,18 @@ const uintptr_t* RegisterOperation::getRegisterPointer(const VexGuestState* stat
     }
     return reinterpret_cast<const uintptr_t*>(reinterpret_cast<const char*>(state) + found->second);
 }
+
+size_t RegisterOperation::getRegisterPointerOffset(const char* registerName)
+{
+    auto found = m_map.find(registerName);
+    if (found == m_map.end()) {
+        return 0;
+    }
+    return found->second;
+}
+
+RegisterOperation& RegisterOperation::getDefault()
+{
+    static RegisterOperation s_op;
+    return s_op;
+}
