@@ -103,6 +103,7 @@ private:
     jit::LValue translateConst(IRExpr* expr);
     jit::LValue translateGet(IRExpr* expr);
     jit::LValue translateLoad(IRExpr* expr);
+    jit::LValue translateBinop(IRExpr* expr);
     inline void _ensureType(jit::LValue val, IRType type) __attribute__((pure));
 #define ensureType(val, type) \
     _ensureType(val, type)
@@ -675,6 +676,9 @@ jit::LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
     case Iex_Load: {
         return translateLoad(expr);
     }
+    case Iex_Binop: {
+        return translateBinop(expr);
+    }
     }
     EMASSERT("not supported expr" && false);
 }
@@ -734,6 +738,244 @@ jit::LValue VexTranslatorImpl::translateLoad(IRExpr* expr)
     LValue addr = translateExpr(load.addr);
     LValue pointer = castToPointer(load.ty, addr);
     return m_output->buildLoad(pointer);
+}
+
+jit::LValue VexTranslatorImpl::translateBinop(IRExpr* expr)
+{
+    auto&& binop = expr->Iex.Binop;
+    LValue arg1 = translateExpr(binop.arg1);
+    LValue arg2 = translateExpr(binop.arg2);
+    switch (op) {
+      Iop_Add8,  Iop_Add16,  Iop_Add32,  Iop_Add64,
+      Iop_Sub8,  Iop_Sub16,  Iop_Sub32,  Iop_Sub64,
+      Iop_Mul8,  Iop_Mul16,  Iop_Mul32,  Iop_Mul64,
+      Iop_Or8,   Iop_Or16,   Iop_Or32,   Iop_Or64,
+      Iop_And8,  Iop_And16,  Iop_And32,  Iop_And64,
+      Iop_Xor8,  Iop_Xor16,  Iop_Xor32,  Iop_Xor64,
+      Iop_Shl8,  Iop_Shl16,  Iop_Shl32,  Iop_Shl64,
+      Iop_Shr8,  Iop_Shr16,  Iop_Shr32,  Iop_Shr64,
+      Iop_Sar8,  Iop_Sar16,  Iop_Sar32,  Iop_Sar64,
+      Iop_CmpEQ8,  Iop_CmpEQ16,  Iop_CmpEQ32,  Iop_CmpEQ64,
+      Iop_CmpNE8,  Iop_CmpNE16,  Iop_CmpNE32,  Iop_CmpNE64,
+      Iop_CasCmpEQ8, Iop_CasCmpEQ16, Iop_CasCmpEQ32, Iop_CasCmpEQ64,
+      Iop_CasCmpNE8, Iop_CasCmpNE16, Iop_CasCmpNE32, Iop_CasCmpNE64,
+      Iop_ExpCmpNE8, Iop_ExpCmpNE16, Iop_ExpCmpNE32, Iop_ExpCmpNE64,
+      Iop_MullS8, Iop_MullS16, Iop_MullS32, Iop_MullS64,
+      Iop_MullU8, Iop_MullU16, Iop_MullU32, Iop_MullU64,
+      Iop_CmpLT32S, Iop_CmpLT64S,
+      Iop_CmpLE32S, Iop_CmpLE64S,
+      Iop_CmpLT32U, Iop_CmpLT64U,
+      Iop_CmpLE32U, Iop_CmpLE64U,
+      Iop_CmpNEZ8, Iop_CmpNEZ16,  Iop_CmpNEZ32,  Iop_CmpNEZ64,
+      Iop_CmpwNEZ32, Iop_CmpwNEZ64, 
+      Iop_Left8, Iop_Left16, Iop_Left32, Iop_Left64, 
+      Iop_Max32U, 
+      Iop_CmpORD32U, Iop_CmpORD64U,
+      Iop_CmpORD32S, Iop_CmpORD64S,
+      Iop_DivU32,
+      Iop_DivS32,
+      Iop_DivU64,
+      Iop_DivS64,
+      Iop_DivU64E,
+                 
+      Iop_DivS64E,
+      Iop_DivU32E,
+                  
+      Iop_DivS32E, 
+
+      Iop_DivModU64to32,
+                       
+      Iop_DivModS64to32,
+
+      Iop_DivModU128to64,
+                        
+      Iop_DivModS128to64,
+
+      Iop_DivModS64to64,
+      Iop_SqrtF64,
+
+      Iop_SqrtF32,
+      Iop_CmpF64,
+      Iop_CmpF32,
+      Iop_CmpF128,
+      Iop_F64toI16S,
+      Iop_F64toI32S,
+      Iop_F64toI64S,
+      Iop_F64toI64U,
+
+      Iop_F64toI32U,
+
+      Iop_I32StoF64,
+      Iop_I64StoF64,
+      Iop_I64UtoF64,
+      Iop_I64UtoF32,
+
+      Iop_I32UtoF32,
+      Iop_I32UtoF64,
+
+      Iop_F32toI32S,
+      Iop_F32toI64S,
+      Iop_F32toI32U,
+      Iop_F32toI64U,
+
+      Iop_I32StoF32,
+      Iop_I64StoF32,
+
+      Iop_F32toF64,
+      Iop_F64toF32,
+                       
+      Iop_F64HLtoF128,
+      Iop_F128HItoF64,
+      Iop_F128LOtoF64,
+Iop_SqrtF128,
+      Iop_F128toI32S,
+      Iop_F128toI64S,
+      Iop_F128toI32U,
+      Iop_F128toI64U,
+      Iop_F128toF64,
+      Iop_F128toF32,
+      Iop_AtanF64,
+      Iop_Yl2xF64,
+      Iop_Yl2xp1F64,
+      Iop_PRemF64,
+      Iop_PRemC3210F64,
+      Iop_PRem1F64,
+      Iop_PRem1C3210F64,
+      Iop_ScaleF64,
+      Iop_SinF64,
+      Iop_CosF64,
+      Iop_TanF64,
+      Iop_2xm1F64,
+      Iop_RoundF64toInt,
+      Iop_RoundF32toInt,
+      Iop_RoundF64toF32,
+      Iop_QAdd32S,
+      Iop_QSub32S,
+      Iop_Add16x2, Iop_Sub16x2,
+      Iop_QAdd16Sx2, Iop_QAdd16Ux2,
+      Iop_QSub16Sx2, Iop_QSub16Ux2,
+      Iop_HAdd16Ux2, Iop_HAdd16Sx2,
+      Iop_HSub16Ux2, Iop_HSub16Sx2,
+      Iop_Add8x4, Iop_Sub8x4,
+      Iop_QAdd8Sx4, Iop_QAdd8Ux4,
+      Iop_QSub8Sx4, Iop_QSub8Ux4,
+      Iop_HAdd8Ux4, Iop_HAdd8Sx4,
+      Iop_HSub8Ux4, Iop_HSub8Sx4,
+      Iop_Sad8Ux4,
+      Iop_F32ToFixed32Ux2_RZ,
+      Iop_Fixed32UToF32x2_RN,
+      Iop_Max32Fx2,      Iop_Min32Fx2,
+      Iop_PwMax32Fx2,    Iop_PwMin32Fx2,
+      Iop_CmpEQ32Fx2, Iop_CmpGT32Fx2, Iop_CmpGE32Fx2,
+      Iop_RecipStep32Fx2,
+      Iop_RSqrtStep32Fx2,
+      Iop_Add8x8,   Iop_Add16x4,   Iop_Add32x2,
+      Iop_QAdd8Ux8, Iop_QAdd16Ux4, Iop_QAdd32Ux2, Iop_QAdd64Ux1,
+      Iop_QAdd8Sx8, Iop_QAdd16Sx4, Iop_QAdd32Sx2, Iop_QAdd64Sx1,
+      Iop_PwAdd8x8,  Iop_PwAdd16x4,  Iop_PwAdd32x2,
+      Iop_PwMax8Sx8, Iop_PwMax16Sx4, Iop_PwMax32Sx2,
+      Iop_PwMax8Ux8, Iop_PwMax16Ux4, Iop_PwMax32Ux2,
+      Iop_PwMin8Sx8, Iop_PwMin16Sx4, Iop_PwMin32Sx2,
+      Iop_PwMin8Ux8, Iop_PwMin16Ux4, Iop_PwMin32Ux2,
+      Iop_Sub8x8,   Iop_Sub16x4,   Iop_Sub32x2,
+      Iop_QSub8Ux8, Iop_QSub16Ux4, Iop_QSub32Ux2, Iop_QSub64Ux1,
+      Iop_QSub8Sx8, Iop_QSub16Sx4, Iop_QSub32Sx2, Iop_QSub64Sx1,
+      Iop_Mul8x8, Iop_Mul16x4, Iop_Mul32x2,
+      Iop_Mul32Fx2,
+      Iop_MulHi16Ux4,
+      Iop_MulHi16Sx4,
+      Iop_PolynomialMul8x8,
+      Iop_QDMulHi16Sx4, Iop_QDMulHi32Sx2,
+      Iop_QRDMulHi16Sx4, Iop_QRDMulHi32Sx2,
+      Iop_Avg8Ux8,
+      Iop_Avg16Ux4,
+      Iop_Max8Sx8, Iop_Max16Sx4, Iop_Max32Sx2,
+      Iop_Max8Ux8, Iop_Max16Ux4, Iop_Max32Ux2,
+      Iop_Min8Sx8, Iop_Min16Sx4, Iop_Min32Sx2,
+      Iop_Min8Ux8, Iop_Min16Ux4, Iop_Min32Ux2,
+      Iop_CmpEQ8x8,  Iop_CmpEQ16x4,  Iop_CmpEQ32x2,
+      Iop_CmpGT8Ux8, Iop_CmpGT16Ux4, Iop_CmpGT32Ux2,
+      Iop_CmpGT8Sx8, Iop_CmpGT16Sx4, Iop_CmpGT32Sx2,
+      Iop_Shl8x8, Iop_Shl16x4, Iop_Shl32x2,
+      Iop_Shr8x8, Iop_Shr16x4, Iop_Shr32x2,
+      Iop_Sar8x8, Iop_Sar16x4, Iop_Sar32x2,
+      Iop_Sal8x8, Iop_Sal16x4, Iop_Sal32x2, Iop_Sal64x1,
+      Iop_ShlN8x8, Iop_ShlN16x4, Iop_ShlN32x2,
+      Iop_ShrN8x8, Iop_ShrN16x4, Iop_ShrN32x2,
+      Iop_SarN8x8, Iop_SarN16x4, Iop_SarN32x2,
+      Iop_QShl8x8, Iop_QShl16x4, Iop_QShl32x2, Iop_QShl64x1,
+      Iop_QSal8x8, Iop_QSal16x4, Iop_QSal32x2, Iop_QSal64x1,
+      Iop_QShlNsatSU8x8,  Iop_QShlNsatSU16x4,
+      Iop_QShlNsatSU32x2, Iop_QShlNsatSU64x1,
+      Iop_QShlNsatUU8x8,  Iop_QShlNsatUU16x4,
+      Iop_QShlNsatUU32x2, Iop_QShlNsatUU64x1,
+      Iop_QShlNsatSS8x8,  Iop_QShlNsatSS16x4,
+      Iop_QShlNsatSS32x2, Iop_QShlNsatSS64x1,
+      Iop_QNarrowBin16Sto8Ux8,
+      Iop_QNarrowBin16Sto8Sx8, Iop_QNarrowBin32Sto16Sx4,
+      Iop_NarrowBin16to8x8,    Iop_NarrowBin32to16x4,
+      Iop_InterleaveHI8x8, Iop_InterleaveHI16x4, Iop_InterleaveHI32x2,
+      Iop_InterleaveLO8x8, Iop_InterleaveLO16x4, Iop_InterleaveLO32x2,
+      Iop_InterleaveOddLanes8x8, Iop_InterleaveEvenLanes8x8,
+      Iop_InterleaveOddLanes16x4, Iop_InterleaveEvenLanes16x4,
+      Iop_CatOddLanes8x8, Iop_CatOddLanes16x4,
+      Iop_CatEvenLanes8x8, Iop_CatEvenLanes16x4,
+      Iop_GetElem8x8, Iop_GetElem16x4, Iop_GetElem32x2,
+      Iop_Perm8x8,
+      Iop_ShlD64, Iop_ShrD64,
+      Iop_ShlD128, Iop_ShrD128,
+      Iop_D64toD32,
+      Iop_D128toD64,
+      Iop_I64StoD64,
+      Iop_I64UtoD64,
+      Iop_D64toI32S,
+      Iop_D64toI32U,
+      Iop_D64toI64S,
+      Iop_D64toI64U,
+      Iop_D128toI32S,
+      Iop_D128toI32U,
+      Iop_D128toI64S,
+      Iop_D128toI64U,
+      Iop_F32toD32,
+      Iop_F32toD64,
+      Iop_F32toD128,
+      Iop_F64toD32,
+
+      Iop_F64toD64,
+
+      Iop_F64toD128,
+
+      Iop_F128toD32,
+
+      Iop_F128toD64,
+
+      Iop_F128toD128,
+
+      Iop_D32toF32,
+
+      Iop_D32toF64,
+
+      Iop_D32toF128,
+
+      Iop_D64toF32,
+
+      Iop_D64toF64,
+
+      Iop_D64toF128,
+
+      Iop_D128toF32,
+
+      Iop_D128toF64,
+
+      Iop_D128toF128,
+      Iop_InsertExpD64,
+
+      Iop_InsertExpD128,
+      Iop_D64HLtoD128, Iop_D128HItoD64, Iop_D128LOtoD64,
+      Iop_Max32Fx4, Iop_Min32Fx4,
+      Iop_Add32Fx2, Iop_Sub32Fx2,
+
+    }
 }
 
 LValue VexTranslatorImpl::castToPointer(IRType irtype, LValue p)
