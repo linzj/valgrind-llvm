@@ -93,15 +93,20 @@ private:
     bool translatePutI(IRStmt* stmt);
     bool translateWrTmp(IRStmt* stmt);
     bool translateExit(IRStmt* stmt);
+    bool translateStore(IRStmt* stmt);
+    bool translateStoreG(IRStmt* stmt);
+    bool translateLoadG(IRStmt* stmt);
 
     jit::LValue translateExpr(IRExpr* expr);
     jit::LValue translateRdTmp(IRExpr* expr);
     jit::LValue translateConst(IRExpr* expr);
     jit::LValue translateGet(IRExpr* expr);
+    jit::LValue translateLoad(IRExpr* expr);
     inline void _ensureType(jit::LValue val, IRType type) __attribute__((pure));
 #define ensureType(val, type) \
     _ensureType(val, type)
 
+    LValue castToPointer(IRType type, LValue p);
     static void patchProloge(void*, uint8_t* start);
     static void patchDirect(void*, uint8_t* p, void*);
     static void patchIndirect(void*, uint8_t* p, void*);
@@ -285,10 +290,6 @@ bool VexTranslatorImpl::translate(IRSB* bb, const VexTranslatorEnv& env)
 bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
 {
     switch (stmt->tag) {
-    case Ist_Store: {
-        EMASSERT("not yet implement" && false);
-        return false;
-    } break;
     case Ist_Put: {
         return translatePut(stmt);
     } break;
@@ -300,6 +301,15 @@ bool VexTranslatorImpl::translateStmt(IRStmt* stmt)
     } break;
     case Ist_Exit: {
         return translateExit(stmt);
+    }
+    case Ist_Store: {
+        return translateStore(stmt);
+    }
+    case Ist_StoreG: {
+        return translateStoreG(stmt);
+    }
+    case Ist_LoadG: {
+        return translateLoadG(stmt);
     }
     default:
         EMASSERT("not yet implement" && false);
@@ -422,6 +432,89 @@ end:
     return true;
 }
 
+bool VexTranslatorImpl::translateStore(IRStmt* stmt)
+{
+    auto&& store = stmt->Ist.Store;
+    EMASSERT(store.end == Iend_LE);
+    LValue addr = translateExpr(store.addr);
+    LValue data = translateExpr(store.data);
+    LValue castAddr = m_output->buildCast(LLVMBitCast, addr, jit::pointerType(jit::typeOf(data)));
+    m_output->buildStore(data, castAddr);
+    return true;
+}
+
+bool VexTranslatorImpl::translateStoreG(IRStmt* stmt)
+{
+    IRStoreG* details = stmt->Ist.StoreG.details;
+    EMASSERT(details->end == Iend_LE);
+    LValue addr = translateExpr(details->addr);
+    LValue data = translateExpr(details->data);
+    LValue castAddr = m_output->buildCast(LLVMBitCast, addr, jit::pointerType(jit::typeOf(data)));
+    LValue guard = translateExpr(details->guard);
+    LBasicBlock bbt = m_output->appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
+    m_output->buildCondBr(guard, bbt, bbnt);
+    m_output->positionToBBEnd(bbt);
+    m_output->buildStore(data, castAddr);
+    m_output->buildBr(bbnt);
+    m_output->positionToBBEnd(bbnt);
+    return true;
+}
+
+bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
+{
+    IRLoadG* details = stmt->Ist.LoadG.details;
+    EMASSERT(details->end == Iend_LE);
+    LValue addr = translateExpr(details->addr);
+    LValue alt = translateExpr(details->alt);
+    LValue guard = translateExpr(details->guard);
+    LBasicBlock bbt = m_output->appendBasicBlock("taken");
+    LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
+    m_output->buildCondBr(guard, bbt, bbnt);
+    LBasicBlock original = m_output->current();
+    m_output->positionToBBEnd(bbt);
+    LType pointerType;
+    switch (details->cvt) {
+    case ILGop_Ident32:
+        pointerType = m_output->repo().ref32;
+        break;
+    case ILGop_16Sto32:
+    case ILGop_16Uto32:
+        pointerType = m_output->repo().ref16;
+        break;
+    case ILGop_8Uto32:
+    case ILGop_8Sto32:
+        pointerType = m_output->repo().ref8;
+        break;
+    }
+    LValue dataBeforCast = m_output->buildLoad(m_output->buildCast(LLVMBitCast, addr, pointerType));
+    LValue dataAfterCast;
+    // do casting
+    switch (details->cvt) {
+    case ILGop_Ident32:
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int32);
+        dataAfterCast = dataBeforCast;
+        break;
+    case ILGop_16Sto32:
+    case ILGop_16Uto32:
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int16);
+        dataAfterCast = m_output->buildCast(details->cvt == ILGop_16Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
+        break;
+    case ILGop_8Uto32:
+    case ILGop_8Sto32:
+        EMASSERT(typeOf(dataBeforCast) == m_output->repo().int8);
+        dataAfterCast = m_output->buildCast(details->cvt == ILGop_8Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
+        break;
+    }
+    m_output->buildBr(bbnt);
+    m_output->positionToBBEnd(bbnt);
+    LValue phi = m_output->buildPhi(m_output->repo().int32);
+    jit::addIncoming(phi, &dataAfterCast, &bbt, 1);
+    jit::addIncoming(phi, &alt, &original, 1);
+    m_tmpValMap[details->dst] = phi;
+    return true;
+}
+
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)
 {
     switch (type) {
@@ -533,6 +626,9 @@ jit::LValue VexTranslatorImpl::translateExpr(IRExpr* expr)
     case Iex_Get: {
         return translateGet(expr);
     }
+    case Iex_Load: {
+        return translateLoad(expr);
+    }
     }
     EMASSERT("not supported expr" && false);
 }
@@ -584,6 +680,37 @@ jit::LValue VexTranslatorImpl::translateGet(IRExpr* expr)
     EMASSERT(expr->Iex.Get.ty == Ity_I64);
     LValue beforeCast = m_output->buildLoadArgIndex(expr->Iex.Get.offset / sizeof(intptr_t));
     return beforeCast;
+}
+
+jit::LValue VexTranslatorImpl::translateLoad(IRExpr* expr)
+{
+    auto&& load = expr->Iex.Load;
+    LValue addr = translateExpr(load.addr);
+    LValue pointer = castToPointer(load.ty, addr);
+    return m_output->buildLoad(pointer);
+}
+
+LValue VexTranslatorImpl::castToPointer(IRType irtype, LValue p)
+{
+    LType type;
+    switch (irtype) {
+    case Ity_I8:
+        type = m_output->repo().ref8;
+        break;
+    case Ity_I16:
+        type = m_output->repo().ref16;
+        break;
+    case Ity_I32:
+        type = m_output->repo().ref32;
+        break;
+    case Ity_I64:
+        type = m_output->repo().ref64;
+        break;
+    default:
+        EMASSERT("unsupported type.");
+        EMUNREACHABLE();
+    }
+    return m_output->buildCast(LLVMBitCast, p, type);
 }
 }
 

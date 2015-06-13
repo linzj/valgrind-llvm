@@ -52,4 +52,6 @@ void __my_assert_fail(const char* msg, const char* file_name, int lineno) __attr
 #define EMASSERT(p)
 #endif
 
+#define EMUNREACHABLE() __builtin_unreachable()
+
 #endif /* LOG_H */

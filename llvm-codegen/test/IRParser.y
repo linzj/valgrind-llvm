@@ -1,5 +1,6 @@
 %{
 #include <stdlib.h>
+#include <stdio.h>
 #include "IRContext.h"
 %}
 %pure-parser
@@ -7,6 +8,7 @@
 %lex-param { void* scanner }
 %locations
 %defines
+%define parse.error verbose
 
 %union {
     unsigned long long num;
@@ -16,25 +18,29 @@
 
 %{
 extern int yylex(YYSTYPE* yylval, YYLTYPE* yylloc, void* yyscanner);
+extern const char* yyget_text(void* yyscanner);
 void yyerror(YYLTYPE* yylloc, struct IRContext* context, const char* reason)
 {
-    contextYYError(yyget_lineno(context->m_scanner), yyget_column(context->m_scanner), context, reason);
+    contextYYError(yyget_lineno(context->m_scanner), yyget_column(context->m_scanner), context, reason, yyget_text(context->m_scanner));
 }
 #define scanner context->m_scanner
 %}
 
 %token NEWLINE ERR COMMA
-%token SEPARATOR EQUAL CHECKSTATE CHECKEQ
-%token LEFT_BRACKET RIGHT_BRACKET
+%token SEPARATOR EQUAL
+%token CHECKSTATE CHECKEQ CHECKMEMORY
+%token LEFT_BRACKET RIGHT_BRACKET MEMORY
 %token PLUS MINUS MULTIPLE DIVIDE
 
-%token IRST_PUT IRST_EXIT
-%token IREXP_CONST IREXP_RDTMP
+%token IRST_PUT IRST_EXIT IRST_STORE
+%token IRST_STOREG IRST_LOADG
+%token IREXP_CONST IREXP_RDTMP IREXP_LOAD
+%token IREXP_GET
 
 %token <num> INTNUM
 %token <text> REGISTER_NAME IDENTIFIER
 
-%type <any> expression
+%type <any> expression readtmp_expression
 %type <num> numberic_expression
 
 %left PLUS MINUS
@@ -64,6 +70,14 @@ register_init_statment:
         contextSawRegisterInit(context, $1, $3);
         free($1);
     }
+    | REGISTER_NAME EQUAL MEMORY LEFT_BRACKET numberic_expression COMMA numberic_expression RIGHT_BRACKET {
+        contextSawRegisterInitMemory(context, $1, $5, $7);
+        free($1);
+    }
+    | IDENTIFIER {
+        contextSawInitOption(context, $1);
+        free($1);
+    }
 ;
 
 
@@ -86,7 +100,17 @@ statement
         free($1);
     }
     | IRST_PUT LEFT_BRACKET numberic_expression COMMA expression RIGHT_BRACKET {
-        contextSawIRPutExpr(context, $3, $5);
+        contextSawIRPut(context, $3, $5);
+    }
+    | IRST_STORE LEFT_BRACKET expression COMMA expression RIGHT_BRACKET {
+        contextSawIRStore(context, $3, $5);
+    }
+    | IDENTIFIER EQUAL IRST_LOADG LEFT_BRACKET expression COMMA expression COMMA expression RIGHT_BRACKET {
+        contextSawIRLoadG(context, $1, $5, $7, $9);
+        free($1);
+    }
+    | IRST_STOREG LEFT_BRACKET expression COMMA expression COMMA expression RIGHT_BRACKET {
+        contextSawIRStoreG(context, $3, $5, $7);
     }
     ;
 
@@ -97,14 +121,39 @@ expression
             YYABORT;
         }
     }
-    | IREXP_RDTMP LEFT_BRACKET IDENTIFIER RIGHT_BRACKET {
-        $$ = contextNewRdTmpExpr(context, $3);
+    | readtmp_expression
+    | IREXP_LOAD LEFT_BRACKET expression RIGHT_BRACKET {
+        $$ = contextNewLoadExpr(context, $3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IREXP_GET LEFT_BRACKET REGISTER_NAME RIGHT_BRACKET {
+        $$ = contextNewGetExpr(context, $3);
         free($3);
         if ($$ == NULL) {
             YYABORT;
         }
     }
     ;
+
+readtmp_expression
+    : IREXP_RDTMP LEFT_BRACKET IDENTIFIER RIGHT_BRACKET {
+        $$ = contextNewRdTmpExpr(context, $3);
+        free($3);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+    | IDENTIFIER {
+        $$ = contextNewRdTmpExpr(context, $1);
+        free($1);
+        if ($$ == NULL) {
+            YYABORT;
+        }
+    }
+;
+
 
 numberic_expression
     : INTNUM {
@@ -147,8 +196,12 @@ check_statment:
         free($2);
         free($3);
     }
-| CHECKSTATE numberic_expression numberic_expression {
-        contextSawChecktState(context, $2, $3);
+| CHECKSTATE numberic_expression {
+        contextSawCheckState(context, $2);
     }
+| CHECKMEMORY REGISTER_NAME numberic_expression {
+    contextSawCheckMemory(context, $2, $3);
+    free($2);
+}
 ;
 %%

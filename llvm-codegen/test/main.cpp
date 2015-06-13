@@ -217,8 +217,10 @@ static void initGuestState(VexGuestState& state, const IRContextInternal& contex
     memset(&state, 0, sizeof(state));
     state.host_EvC_COUNTER = 0xffff;
     RegisterAssign assign;
-    for (auto ri : context.m_registerInit) {
-        assign.assign(&state, ri.m_name, ri.m_val);
+    for (auto&& ri : context.m_registerInit) {
+        ri.m_control->reset();
+        uintptr_t val = ri.m_control->init();
+        assign.assign(&state, ri.m_name, val);
     }
 }
 
@@ -276,10 +278,12 @@ int main()
         &clo_vex_control);
     uintptr_t twoWords[2];
     // run with vex;
-    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
-    initGuestState(guestState, context);
-    vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
-    checkRun("vex", context, twoWords, guestState);
+    if (!context.m_novex) {
+        size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
+        initGuestState(guestState, context);
+        vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
+        checkRun("vex", context, twoWords, guestState);
+    }
     // run with llvm
     jit::VexTranslator::init();
     jit::VexTranslatorEnv env = {

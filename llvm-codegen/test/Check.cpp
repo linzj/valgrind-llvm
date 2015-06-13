@@ -8,7 +8,7 @@ namespace {
 class CheckRegisterEqConst : public Check {
 public:
     CheckRegisterEqConst(const char* name, unsigned long long val)
-        : m_name(name)
+        : m_regName(name)
         , m_val(val)
     {
     }
@@ -16,50 +16,49 @@ public:
 private:
     virtual bool check(const VexGuestState* state, const uintptr_t*, std::string& info) const override
     {
-        RegisterOperation op;
-        const uintptr_t* p = op.getRegisterPointer(state, m_name);
+        RegisterOperation& op = RegisterOperation::getDefault();
+        const uintptr_t* p = op.getRegisterPointer(state, m_regName);
         std::ostringstream oss;
         oss << "CheckRegisterEqConst " << ((*p == m_val) ? "PASSED" : "FAILED")
-            << "; m_name = " << m_name
+            << "; m_regName = " << m_regName
             << "; m_val = " << std::hex
             << m_val;
         info = oss.str();
         return *p == m_val;
     }
-    std::string m_name;
+    std::string m_regName;
     unsigned long long m_val;
 };
 
 class CheckRegisterEq : public Check {
 public:
     CheckRegisterEq(const char* name1, const char* name2)
-        : m_name1(name1)
-        , m_name2(name2)
+        : m_regName1(name1)
+        , m_regName2(name2)
     {
     }
 
 private:
     virtual bool check(const VexGuestState* state, const uintptr_t*, std::string& info) const override
     {
-        RegisterOperation op;
-        const uintptr_t* p1 = op.getRegisterPointer(state, m_name1);
-        const uintptr_t* p2 = op.getRegisterPointer(state, m_name2);
+        RegisterOperation& op = RegisterOperation::getDefault();
+        const uintptr_t* p1 = op.getRegisterPointer(state, m_regName1);
+        const uintptr_t* p2 = op.getRegisterPointer(state, m_regName2);
         std::ostringstream oss;
         oss << "CheckRegisterEq " << ((*p1 == *p2) ? "PASSED" : "FAILED")
-            << "; m_name1 = " << m_name1
-            << "; m_name2 = " << m_name2;
+            << "; m_regName1 = " << m_regName1
+            << "; m_regName2 = " << m_regName2;
         info = oss.str();
         return *p1 == *p2;
     }
-    std::string m_name1;
-    std::string m_name2;
+    std::string m_regName1;
+    std::string m_regName2;
 };
 
 class CheckState : public Check {
 public:
-    CheckState(unsigned long val1, unsigned long val2)
-        : m_val1(val1)
-        , m_val2(val2)
+    CheckState(unsigned long val)
+        : m_val(val)
     {
     }
 
@@ -67,16 +66,38 @@ private:
     virtual bool check(const VexGuestState*, const uintptr_t* w, std::string& info) const override
     {
         std::ostringstream oss;
-        oss << "CheckState " << ((w[0] == m_val1 && w[1] == m_val2) ? "PASSED" : "FAILED")
-            << "; m_val1 = " << std::hex << m_val1
-            << "; m_val2 = " << std::hex << m_val2
-            << "; w[0] = " << std::hex << w[0]
-            << "; w[1] = " << std::hex << w[1];
+        oss << "CheckState " << ((w[0] == m_val) ? "PASSED" : "FAILED")
+            << "; m_val = " << std::hex << m_val
+            << "; w[0] = " << std::hex << w[0];
         info = oss.str();
-        return (w[0] == m_val1 && w[1] == m_val2);
+        return (w[0] == m_val);
     }
-    unsigned long long m_val1;
-    unsigned long long m_val2;
+    unsigned long long m_val;
+};
+
+class CheckMemory : public Check {
+public:
+    CheckMemory(const char* regName, unsigned long val)
+        : m_regName(regName)
+        , m_val(val)
+    {
+    }
+
+private:
+    virtual bool check(const VexGuestState* state, const uintptr_t*, std::string& info) const override
+    {
+        std::ostringstream oss;
+        RegisterOperation& op = RegisterOperation::getDefault();
+        const uintptr_t* p = op.getRegisterPointer(state, m_regName);
+        uintptr_t* const* pp = reinterpret_cast<uintptr_t* const*>(p);
+        oss << "CheckMemory " << (((**pp) == m_val) ? "PASSED" : "FAILED")
+            << "; m_val = " << std::hex << m_val
+            << "; memory = " << std::hex << **pp;
+        info = oss.str();
+        return ((**pp) == m_val);
+    }
+    std::string m_regName;
+    unsigned long long m_val;
 };
 }
 
@@ -90,7 +111,12 @@ std::unique_ptr<Check> Check::createCheckRegisterEq(const char* name1, const cha
     return std::unique_ptr<Check>(new CheckRegisterEq(name1, name2));
 }
 
-std::unique_ptr<Check> Check::createCheckState(unsigned long long val1, unsigned long long val2)
+std::unique_ptr<Check> Check::createCheckState(unsigned long long val)
 {
-    return std::unique_ptr<Check>(new CheckState(val1, val2));
+    return std::unique_ptr<Check>(new CheckState(val));
+}
+
+std::unique_ptr<Check> Check::createCheckMemory(const char* registerName, unsigned long long val)
+{
+    return std::unique_ptr<Check>(new CheckMemory(registerName, val));
 }
