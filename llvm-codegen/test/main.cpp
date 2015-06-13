@@ -278,10 +278,12 @@ int main()
         &clo_vex_control);
     uintptr_t twoWords[2];
     // run with vex;
-    size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
-    initGuestState(guestState, context);
-    vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
-    checkRun("vex", context, twoWords, guestState);
+    if (!context.m_novex) {
+        size_t generatedBytes = genVex(irsb, static_cast<HChar*>(execMem), execMemSize);
+        initGuestState(guestState, context);
+        vex_disp_run_translations(twoWords, &guestState, reinterpret_cast<Addr64>(execMem));
+        checkRun("vex", context, twoWords, guestState);
+    }
     // run with llvm
     jit::VexTranslator::init();
     jit::VexTranslatorEnv env = {

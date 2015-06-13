@@ -20,7 +20,7 @@ void contextSawCheckMemory(struct IRContext* context, const char* name, unsigned
 void contextSawIRWr(struct IRContext* context, const char* id, void* expr);
 void contextSawIRPut(struct IRContext* context, unsigned long long where, void* expr);
 void contextSawIRStore(struct IRContext* context, void* valExpr, void* addrExpr);
-int contextSawIRLoadG(struct IRContext* context, const char* tmp, void* conditionExpr, void* addrExpr, void* defaultVal);
+void contextSawIRLoadG(struct IRContext* context, const char* tmp, void* conditionExpr, void* addrExpr, void* defaultVal);
 void contextSawIRStoreG(struct IRContext* context, void* conditionExpr, void* valExpr, void* addrExpr);
 void* contextNewConstExpr(struct IRContext* context, unsigned long long val);
 void* contextNewRdTmpExpr(struct IRContext* context, const char* id);

@@ -106,11 +106,8 @@ statement
         contextSawIRStore(context, $3, $5);
     }
     | IDENTIFIER EQUAL IRST_LOADG LEFT_BRACKET expression COMMA expression COMMA expression RIGHT_BRACKET {
-        int b = contextSawIRLoadG(context, $1, $5, $7, $9);
+        contextSawIRLoadG(context, $1, $5, $7, $9);
         free($1);
-        if (!b) {
-            YYABORT;
-        }
     }
     | IRST_STOREG LEFT_BRACKET expression COMMA expression COMMA expression RIGHT_BRACKET {
         contextSawIRStoreG(context, $3, $5, $7);

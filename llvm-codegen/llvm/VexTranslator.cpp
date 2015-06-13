@@ -438,7 +438,6 @@ bool VexTranslatorImpl::translateStore(IRStmt* stmt)
     EMASSERT(store.end == Iend_LE);
     LValue addr = translateExpr(store.addr);
     LValue data = translateExpr(store.data);
-    // EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
     LValue castAddr = m_output->buildCast(LLVMBitCast, addr, jit::pointerType(jit::typeOf(data)));
     m_output->buildStore(data, castAddr);
     return true;
@@ -450,15 +449,16 @@ bool VexTranslatorImpl::translateStoreG(IRStmt* stmt)
     EMASSERT(details->end == Iend_LE);
     LValue addr = translateExpr(details->addr);
     LValue data = translateExpr(details->data);
-    EMASSERT(jit::getElementType(jit::typeOf(addr)) == jit::typeOf(data));
+    LValue castAddr = m_output->buildCast(LLVMBitCast, addr, jit::pointerType(jit::typeOf(data)));
     LValue guard = translateExpr(details->guard);
     LBasicBlock bbt = m_output->appendBasicBlock("taken");
     LBasicBlock bbnt = m_output->appendBasicBlock("not_taken");
     m_output->buildCondBr(guard, bbt, bbnt);
     m_output->positionToBBEnd(bbt);
-    m_output->buildStore(data, addr);
+    m_output->buildStore(data, castAddr);
     m_output->buildBr(bbnt);
     m_output->positionToBBEnd(bbnt);
+    return true;
 }
 
 bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
@@ -473,16 +473,30 @@ bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
     m_output->buildCondBr(guard, bbt, bbnt);
     LBasicBlock original = m_output->current();
     m_output->positionToBBEnd(bbt);
-    LValue dataBeforCast = m_output->buildLoad(m_output->buildPointerCast(addr, m_output->repo().ref32));
+    LType pointerType;
+    switch (details->cvt) {
+    case ILGop_Ident32:
+        pointerType = m_output->repo().ref32;
+        break;
+    case ILGop_16Sto32:
+    case ILGop_16Uto32:
+        pointerType = m_output->repo().ref16;
+        break;
+    case ILGop_8Uto32:
+    case ILGop_8Sto32:
+        pointerType = m_output->repo().ref8;
+        break;
+    }
+    LValue dataBeforCast = m_output->buildLoad(m_output->buildCast(LLVMBitCast, addr, pointerType));
     LValue dataAfterCast;
     // do casting
     switch (details->cvt) {
     case ILGop_Ident32:
         EMASSERT(typeOf(dataBeforCast) == m_output->repo().int32);
-        dataAfterCast = dataAfterCast;
+        dataAfterCast = dataBeforCast;
         break;
     case ILGop_16Sto32:
-    case ILGop_16Uto32: {
+    case ILGop_16Uto32:
         EMASSERT(typeOf(dataBeforCast) == m_output->repo().int16);
         dataAfterCast = m_output->buildCast(details->cvt == ILGop_16Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
         break;
@@ -492,13 +506,13 @@ bool VexTranslatorImpl::translateLoadG(IRStmt* stmt)
         dataAfterCast = m_output->buildCast(details->cvt == ILGop_8Uto32 ? LLVMZExt : LLVMSExt, dataBeforCast, m_output->repo().int32);
         break;
     }
-    }
     m_output->buildBr(bbnt);
     m_output->positionToBBEnd(bbnt);
     LValue phi = m_output->buildPhi(m_output->repo().int32);
     jit::addIncoming(phi, &dataAfterCast, &bbt, 1);
     jit::addIncoming(phi, &alt, &original, 1);
     m_tmpValMap[details->dst] = phi;
+    return true;
 }
 
 void VexTranslatorImpl::_ensureType(jit::LValue val, IRType type)

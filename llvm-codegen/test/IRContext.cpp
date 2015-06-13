@@ -107,16 +107,20 @@ void contextSawIRStore(struct IRContext* context, void* valExpr, void* addrExpr)
     PUSH_BACK_STMT(stmt);
 }
 
-int contextSawIRLoadG(struct IRContext* context, const char* tmp, void* conditionExpr, void* addrExpr, void* defaultVal)
+void contextSawIRLoadG(struct IRContext* context, const char* id, void* conditionExpr, void* addrExpr, void* defaultVal)
 {
     LOGE("%s:.\n", __FUNCTION__);
     auto&& tmpMap = CONTEXT()->getTempMap();
-    auto found = tmpMap.find(tmp);
-    if (found == tmpMap.end()) {
-        LOGE("%s: can't find tmp %s.\n", __FUNCTION__, tmp);
-        return false;
+    auto found = tmpMap.find(id);
+    IRTemp tmp;
+    if (found != tmpMap.end()) {
+        tmp = found->second;
     }
-    IRStmt* stmt = IRStmt_LoadG(Iend_LE, ILGop_Ident32, found->second, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(defaultVal), static_cast<IRExpr*>(conditionExpr));
+    else {
+        tmp = newIRTemp(CONTEXT()->m_irsb->tyenv, Ity_I64);
+        tmpMap[id] = tmp;
+    }
+    IRStmt* stmt = IRStmt_LoadG(Iend_LE, ILGop_Ident32, tmp, static_cast<IRExpr*>(addrExpr), static_cast<IRExpr*>(defaultVal), static_cast<IRExpr*>(conditionExpr));
     PUSH_BACK_STMT(stmt);
 }
 
