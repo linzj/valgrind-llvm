@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <llvm/IR/IRBuilder.h>
 #include "CompilerState.h"
 #include "Output.h"
 
@@ -235,6 +236,12 @@ LValue Output::buildSelect(LValue condition, LValue taken, LValue notTaken)
 LValue Output::buildICmp(LIntPredicate cond, LValue left, LValue right)
 {
     return jit::buildICmp(m_builder, cond, left, right);
+}
+
+LValue Output::buildAtomicCmpXchg(LValue addr, LValue cmp, LValue val)
+{
+    llvm::IRBuilder<>* builder = llvm::unwrap(m_builder);
+    return llvm::wrap(builder->CreateAtomicCmpXchg(llvm::unwrap(addr), llvm::unwrap(cmp), llvm::unwrap(val), llvm::SequentiallyConsistent, llvm::SequentiallyConsistent));
 }
 
 LType Output::typeOf(LValue val)

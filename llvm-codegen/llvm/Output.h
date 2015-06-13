@@ -35,6 +35,7 @@ public:
     LValue buildArgBytePointer();
     LValue buildSelect(LValue condition, LValue taken, LValue notTaken);
     LValue buildICmp(LIntPredicate cond, LValue left, LValue right);
+    LValue buildAtomicCmpXchg(LValue addr, LValue cmp, LValue val);
 
     inline LValue buildCall(LValue function, const LValue* args, unsigned numArgs)
     {
