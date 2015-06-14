@@ -974,6 +974,12 @@ Iop_SqrtF128,
       Iop_D64HLtoD128, Iop_D128HItoD64, Iop_D128LOtoD64,
       Iop_Max32Fx4, Iop_Min32Fx4,
       Iop_Add32Fx2, Iop_Sub32Fx2,
+      Iop_CmpEQ32Fx4, Iop_CmpLT32Fx4, Iop_CmpLE32Fx4, Iop_CmpUN32Fx4,
+      Iop_CmpGT32Fx4, Iop_CmpGE32Fx4,
+      Iop_PwMax32Fx4, Iop_PwMin32Fx4,
+      Iop_RecipStep32Fx4,
+      Iop_F32ToFixed32Ux4_RZ, Iop_F32ToFixed32Sx4_RZ,
+      Iop_Fixed32UToF32x4_RN, Iop_Fixed32SToF32x4_RN,
 
     }
 }
